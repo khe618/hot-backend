@@ -18,8 +18,19 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
-app.get("/events", function (req, res){
-	db.collection("events").findOne({}, function(err, result){
+app.get("/events/:eventId([0-9A-Za-z]*)", function (req, res){
+	var eventId = req.params.eventId;
+	var query = {_id: ObjectId(eventId)}
+	db.collection("events").findOne(query, function(err, result){
+		if (err) throw err;
+		res.json(result)
+	})
+})
+
+app.delete("/events/:eventId([0-9A-Za-z]*)", function (req, res){
+	var eventId = req.params.eventId;
+	var query = {_id: ObjectId(eventId)}
+	db.collection("events").deleteOne(query, function(err, result){
 		if (err) throw err;
 		res.json(result)
 	})
