@@ -36,6 +36,15 @@ app.delete("/events/:eventId([0-9A-Za-z]*)", function (req, res){
 	})
 })
 
+app.post("/events", function(req, res){
+	var data = req.body
+	db.collection("events").insertOne(data, function(err, result){
+		if(err) throw err;
+		else{
+			res.sendStatus(200)
+		}
+	})
+})
 
 MongoClient.connect("mongodb://heroku_4bgzbp8r:srsgfdtlepejihdfa2ruarggr5@ds053937.mlab.com:53937/heroku_4bgzbp8r", function (err, client){
 	db = client.db("heroku_4bgzbp8r")
