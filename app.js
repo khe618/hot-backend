@@ -3,14 +3,14 @@ const
     bodyParser = require("body-parser"),
     express = require("express"),
     path = require("path"),
-    request = require("request"),
     MongoClient = require("mongodb").MongoClient,
-    ObjectId = require('mongodb').ObjectId,
+    ObjectId = require('mongodb').ObjectId;
+    request = require("request"),
     swaggerJSDoc = require('swagger-jsdoc'),
+    database = require("./database"),
     admin = require('firebase-admin');
 
 var app = express();
-var db;
 
 app.use(bodyParser.urlencoded({
     extended: true
@@ -124,112 +124,73 @@ app.get('/docs', (req, res) => {
  * 
  */
 app.get("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    var eventId = req.params.eventId;
-    var query = {_id: ObjectId(eventId)}
-    var result = await db.collection("events").findOne(query)
-    res.json(result);
+    res.json(await database.getEvent(req.params.eventId));
 }))
 
 app.delete("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    var eventId = req.params.eventId;
-    var query = {_id: ObjectId(eventId)}
-    var result = await db.collection("events").deleteOne(query)
-    res.json(result);
+    res.json(await database.deleteEvent(req.params.eventId))
 }))
 
 app.post("/events", asyncMiddleware(async (req, res, next) => {
-    var data = req.body;
-    var result = await db.collection("events").insertOne(data)
+    var result = await database.createEvent(req.body)
     res.send(result.insertedId)
 }))
 
 app.get("/events", asyncMiddleware(async (req, res, next) => {
-    result = await db.collection("events").find({}).toArray()
-    res.json(result)
+    res.json(await database.getEvents())
 }))
 
 
 app.get("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    var userId = req.params.userId;
-    var query = {_id: ObjectId(userId)}
-    result = await db.collection("users").findOne(query)
-    res.json(result)
+    res.json(await database.getUser(req.params.userId))
 }))
 
 app.delete("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    var userId = req.params.userId;
-    var query = {_id: ObjectId(userId)}
-    var result = await db.collection("users").deleteOne(query)
-    res.json(result)
+    res.json(await database.deleteUser(req.params.userId))
 }))
 
 app.post("/users", asyncMiddleware(async (req, res, next) => {
-    var data = req.body
-    var result = await db.collection("users").insertOne(data)
+    var result = await database.createUser(req.body);
     res.send(result.insertedId)
 }))
 
 app.get("/users", asyncMiddleware(async (req, res, next) => {
-    var result = await db.collection("users").find({}).toArray()
-    res.json(result)
+    res.json(await database.getUsers())
 }))
 
-app.get("/usersEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    var userEventId = req.params.userEventId;
-    var query = {_id:ObjectId(userEventId)}
-    var result = await db.collection("usersEvents").findOne(query)
-    res.json(result)
+app.get("/userEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+    res.json(await database.getUserEvent(req.params.userEventId))
 }))
 
 app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
-    var result = await db.collection("usersEvents").find({}).toArray()
-    res.json(result)
+    res.json(await database.getUserEvents())
 }))
 
 app.post("/userEvents", asyncMiddleware(async (req, res, next) => {
-    var data = req.body
-    result = await db.collection("usersEvents").insertOne(data)
+    var result = await database.createUserEvent(req.body);
     res.send(result.insertedId)
 }))
 
-app.delete("/usersEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    var userEventId = req.params.userEventId;
-    var query = {_id:ObjectId(userEventId)}
-    await db.collection("usersEvents").deleteOne(query)
-    res.sendStatus(200)
+app.delete("/userEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+    res.json(await database.deleteUserEvent(req.params.userEventId));
 }))
 
-app.get("/usersEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
-    var userId = req.params.userId;
-    var status = req.params.status;
-    var query = {userId: userId, status: status};
-    var userEvents = await db.collection("userEvents").find(query).toArray()
-    var eventIds = userEvents.map(e => ObjectId(e.eventId))
-    var eventObjects = await db.collection("events").find({_id: {$in: eventIds}}).toArray()
-    res.json(eventObjects)
+app.get("/userEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
+    res.json(await database.getEventsByUserAndStatus(req.params.userId, req.params.status))
 }))
 
-app.get("/usersEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
-    var eventId = req.params.eventId;
-    var status = req.params.status;
-    var query = {eventId: eventId, status: status};
-    var userEvents = await db.collection("userEvents").find(query).toArray()
-    var userIds = userEvents.map(e => ObjectId(e.userId))
-    var userObjects = await db.collection("users").find({_id: {$in: userIds}}).toArray()
-    res.json(userObjects)
+app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
+    res.json(await database.getUsersByEventAndStatus(req.params.eventId, req.params.status))
 }))
 
 app.get("/nearestEvents", asyncMiddleware(async (req, res, next) => {
     var latitude = req.query.latitude;
     var longitude = req.query.longitude;
-    var result = await db.collection("events").find({}).toArray()
+    var events = await database.getEvents();
     result.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude) - 
         getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude))
     res.json(result)
 }))
 
+app.listen(process.env.PORT || 5000);
 
-MongoClient.connect("mongodb://heroku_4bgzbp8r:srsgfdtlepejihdfa2ruarggr5@ds053937.mlab.com:53937/heroku_4bgzbp8r", function (err, client){
-    db = client.db("heroku_4bgzbp8r")
-    app.listen(process.env.PORT || 5000);   
-})
