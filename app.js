@@ -102,10 +102,20 @@ app.get("/usersEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(asyn
 	var userId = req.params.userId;
 	var status = req.params.status;
 	var query = {userId: userId, status: status};
-	var events = await db.collection("userEvents").find(query).toArray()
-	var eventIds = events.map(e => ObjectId(e.eventId))
+	var userEvents = await db.collection("userEvents").find(query).toArray()
+	var eventIds = userEvents.map(e => ObjectId(e.eventId))
 	var eventObjects = await db.collection("events").find({_id: {$in: eventIds}}).toArray()
 	res.json(eventObjects)
+}))
+
+app.get("/usersEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
+	var eventId = req.params.eventId;
+	var status = req.params.status;
+	var query = {eventId: eventId, status: status};
+	var userEvents = await db.collection("userEvents").find(query).toArray()
+	var userIds = userEvents.map(e => ObjectId(e.userId))
+	var userObjects = await db.collection("users").find({_id: {$in: userIds}}).toArray()
+	res.json(userObjects)
 }))
 
 
