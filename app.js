@@ -33,7 +33,7 @@ app.delete("/events/:eventId([0-9A-Za-z]*)", async function (req, res){
 app.post("/events", async function(req, res){
 	var data = req.body;
 	var result = await db.collection("events").insertOne(data)
-	res.json(result);
+	res.send(result.insertedId)
 })
 
 app.get("/events", async function(req, res){
@@ -59,7 +59,7 @@ app.delete("/users/:userId([0-9A-Za-z]*)", async function (req, res){
 app.post("/users", async function(req, res){
 	var data = req.body
 	var result = await db.collection("users").insertOne(data)
-	res.json(result)
+	res.send(result.insertedId)
 })
 
 app.get("/users", async function(req, res){
@@ -82,7 +82,7 @@ app.get("/user-events", async function(req, res){
 app.post("/user-events", async function(req, res){
 	var data = req.body
 	result = await db.collection("users-events").insertOne(data)
-	res.json(result)
+	res.send(result.insertedId)
 })
 
 app.delete("/users-events/:userEventId([0-9A-Za-z]*)", async function(req, res){
