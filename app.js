@@ -20,7 +20,7 @@ app.get("/events/:eventId([0-9A-Za-z]*)", async function (req, res){
 	var eventId = req.params.eventId;
 	var query = {_id: ObjectId(eventId)}
 	var result = await db.collection("events").findOne(query)
-	return result;
+	res.json(result);
 })
 
 app.delete("/events/:eventId([0-9A-Za-z]*)", async function (req, res){
