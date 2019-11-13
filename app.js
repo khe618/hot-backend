@@ -8,8 +8,6 @@ const
 	ObjectId = require('mongodb').ObjectId,
 	admin = require('firebase-admin');
 
-
-
 var app = express();
 var db;
 
@@ -38,6 +36,12 @@ app.post("/events", async function(req, res){
 	res.sendStatus(200)
 })
 
+app.get("/events", async function(req, res){
+	result = await db.collection("events").find({}).toArray()
+	res.json(result)
+})
+
+
 app.get("/users/:userId([0-9A-Za-z]*)", async function (req, res){
 	var userId = req.params.userId;
 	var query = {_id: ObjectId(userId)}
@@ -58,10 +62,25 @@ app.post("/users", async function(req, res){
 	res.sendStatus(200)
 })
 
+app.get("/users", async function(req, res){
+	result = await db.collection("users").find({}).toArray()
+	res.json(result)
+})
+
 app.get("/users-events/:userId([0-9A-Za-z]*)", async function(req, res){
 	var userId = req.params.userId;
 	var query = {_id:ObjectId(userId)}
+})
 
+app.get("/user-events", async function(req, res){
+	result = await db.collection("users-events").find({}).toArray()
+	res.json(result)
+})
+
+app.post("/user-events", async function(req, res){
+	var data = req.body
+	db.collection("users-events").insertOne(data)
+	res.sendStatus(200)
 })
 
 
