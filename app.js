@@ -67,9 +67,9 @@ app.get("/users", async function(req, res){
 	res.json(result)
 })
 
-app.get("/users-events/:userId([0-9A-Za-z]*)", async function(req, res){
-	var userId = req.params.userId;
-	var query = {_id:ObjectId(userId)}
+app.get("/users-events/:userEventId([0-9A-Za-z]*)", async function(req, res){
+	var userEventId = req.params.userEventId;
+	var query = {_id:ObjectId(userEventId)}
 	var result = await db.collection("users-events").findOne(query)
 	res.json(result)
 })
@@ -90,6 +90,13 @@ app.delete("/users-events/:userEventId([0-9A-Za-z]*)", async function(req, res){
 	var query = {_id:ObjectId(userEventId)}
 	await db.collection("users-events").deleteOne(query)
 	res.sendStatus(200)
+})
+
+app.get("/users-events/users/:userId([0-9A-Za-z]*)", async function(req, res){
+	var userId = req.params.userId;
+	var query = {userId: userId};
+	var events = await db.collection("user-events").find(query)
+	console.log(events)
 })
 
 
