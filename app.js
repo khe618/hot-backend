@@ -22,14 +22,14 @@ const asyncMiddleware = fn =>
       .catch(next);
   };
 
-app.get("/events/:eventId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
+app.get("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
 	var eventId = req.params.eventId;
 	var query = {_id: ObjectId(eventId)}
 	var result = await db.collection("events").findOne(query)
 	res.json(result);
 }))
 
-app.delete("/events/:eventId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
+app.delete("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
 	var eventId = req.params.eventId;
 	var query = {_id: ObjectId(eventId)}
 	var result = await db.collection("events").deleteOne(query)
@@ -48,14 +48,14 @@ app.get("/events", asyncMiddleware(async (req, res, next) => {
 }))
 
 
-app.get("/users/:userId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
+app.get("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
 	var userId = req.params.userId;
 	var query = {_id: ObjectId(userId)}
 	result = await db.collection("users").findOne(query)
 	res.json(result)
 }))
 
-app.delete("/users/:userId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
+app.delete("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
 	var userId = req.params.userId;
 	var query = {_id: ObjectId(userId)}
 	var result = await db.collection("users").deleteOne(query)
@@ -73,36 +73,38 @@ app.get("/users", asyncMiddleware(async (req, res, next) => {
 	res.json(result)
 }))
 
-app.get("/users-events/:userEventId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
+app.get("/usersEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
 	var userEventId = req.params.userEventId;
 	var query = {_id:ObjectId(userEventId)}
-	var result = await db.collection("users-events").findOne(query)
+	var result = await db.collection("usersEvents").findOne(query)
 	res.json(result)
 }))
 
-app.get("/user-events", asyncMiddleware(async (req, res, next) => {
-	var result = await db.collection("users-events").find({}).toArray()
+app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
+	var result = await db.collection("usersEvents").find({}).toArray()
 	res.json(result)
 }))
 
-app.post("/user-events", asyncMiddleware(async (req, res, next) => {
+app.post("/userEvents", asyncMiddleware(async (req, res, next) => {
 	var data = req.body
-	result = await db.collection("users-events").insertOne(data)
+	result = await db.collection("usersEvents").insertOne(data)
 	res.send(result.insertedId)
 }))
 
-app.delete("/users-events/:userEventId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
+app.delete("/usersEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
 	var userEventId = req.params.userEventId;
 	var query = {_id:ObjectId(userEventId)}
-	await db.collection("users-events").deleteOne(query)
+	await db.collection("usersEvents").deleteOne(query)
 	res.sendStatus(200)
 }))
 
-app.get("/users-events/users/:userId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
+app.get("/usersEvents/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
 	var userId = req.params.userId;
 	var query = {userId: userId};
-	var events = await db.collection("user-events").find(query)
-	console.log(events)
+	var events = await db.collection("userEvents").find(query).toArray()
+	var eventIds = events.map(e => ObjectId(e.eventId))
+	var eventObjects = await db.collection("events").find({_id: {$in: eventIds}}).toArray()
+	res.json(eventObjects)
 }))
 
 
