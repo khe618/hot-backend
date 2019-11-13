@@ -19,7 +19,7 @@ app.use(bodyParser.json());
 app.get("/events/:eventId([0-9A-Za-z]*)", async function (req, res){
 	var eventId = req.params.eventId;
 	var query = {_id: ObjectId(eventId)}
-	result = await db.collection("events").findOne(query)
+	var result = await db.collection("events").findOne(query)
 	return result;
 })
 
@@ -70,6 +70,8 @@ app.get("/users", async function(req, res){
 app.get("/users-events/:userId([0-9A-Za-z]*)", async function(req, res){
 	var userId = req.params.userId;
 	var query = {_id:ObjectId(userId)}
+	var result = await db.collection("users-events").findOne(query)
+	res.json(result)
 })
 
 app.get("/user-events", async function(req, res){
@@ -81,6 +83,11 @@ app.post("/user-events", async function(req, res){
 	var data = req.body
 	db.collection("users-events").insertOne(data)
 	res.sendStatus(200)
+})
+
+app.delete("/users-events/:userId([0-9A-Za-z]*)", async function(req, res){
+	var userId = req.params.userId;
+	var query = {_id:ObjectId(userId)}
 })
 
 
