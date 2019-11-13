@@ -16,6 +16,12 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
+const asyncMiddleware = fn =>
+  (req, res, next) => {
+    Promise.resolve(fn(req, res, next))
+      .catch(next);
+  };
+
 app.get("/events/:eventId([0-9A-Za-z]*)", async function (req, res){
 	var eventId = req.params.eventId;
 	var query = {_id: ObjectId(eventId)}
@@ -42,12 +48,12 @@ app.get("/events", async function(req, res){
 })
 
 
-app.get("/users/:userId([0-9A-Za-z]*)", async function (req, res){
+app.get("/users/:userId([0-9A-Za-z]*)", asyncMiddleware(async (req, res, next) => {
 	var userId = req.params.userId;
 	var query = {_id: ObjectId(userId)}
 	result = await db.collection("users").findOne(query)
 	res.json(result)
-})
+}))
 
 app.delete("/users/:userId([0-9A-Za-z]*)", async function (req, res){
 	var userId = req.params.userId;
