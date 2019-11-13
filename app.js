@@ -98,9 +98,10 @@ app.delete("/usersEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req
 	res.sendStatus(200)
 }))
 
-app.get("/usersEvents/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+app.get("/usersEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
 	var userId = req.params.userId;
-	var query = {userId: userId};
+	var status = req.params.status;
+	var query = {userId: userId, status: status};
 	var events = await db.collection("userEvents").find(query).toArray()
 	var eventIds = events.map(e => ObjectId(e.eventId))
 	var eventObjects = await db.collection("events").find({_id: {$in: eventIds}}).toArray()
