@@ -208,8 +208,8 @@ app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
         res.status(500).send({ error: 'Invalid parameters' })
     } else {
         var events = await database.getFriendsEvents(userId);
-        var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude) -
-            getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude));
+        var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.loc.lat, a.loc.lng) -
+            getDistanceFromLatLonInKm(latitude, longitude, b.loc.lat, b.loc.lng));
         res.json(result)
     }
 }))

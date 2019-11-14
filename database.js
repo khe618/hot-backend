@@ -68,12 +68,12 @@ exports.deleteUserEvent = async function(userId, eventId){
 	return await db.collection("userEvents").deleteOne(query);
 }
 
-async function getUsersByUsernames(usernames){
-	return await db.collection("users").
-}
-
 exports.getFriendsEvents = async function(userId){
 	var user = await exports.getUser(userId);
-	return await db.collection("userEvents").find({_id: {$in: user.friends}}).toArray()
+	console.log(user)
+	var userEvents = await db.collection("userEvents").find({userId: {$in: user.friends}}).toArray()
+	var eventIds = userEvents.map(x => ObjectId(x.eventId))
+	console.log(eventIds)
+	return await db.collection("events").find({_id: {$in: eventIds}}).toArray()
 }
 
