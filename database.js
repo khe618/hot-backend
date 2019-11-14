@@ -48,7 +48,6 @@ exports.createUserEvent = createEntity("userEvents");
 //exports.deleteUserEvent = deleteEntity("userEvents");
 
 
-
 exports.getEventsByUserAndStatus = async function(userId, status){
 	var query = {userId: userId, status: status};
     var userEvents = await exports.getUserEvents()

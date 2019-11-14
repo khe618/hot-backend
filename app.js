@@ -176,8 +176,9 @@ app.post("/userEvents", asyncMiddleware(async (req, res, next) => {
     res.send(result.insertedId)
 }))
 
-app.delete("/userEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.deleteUserEvent(req.params.userEventId));
+app.delete("/userEvents", asyncMiddleware(async (req, res, next) => {
+    var {userId, eventId} = req.query;
+    res.json(await database.deleteUserEvent(userId, eventId));
 }))
 
 app.get("/userEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
@@ -188,14 +189,10 @@ app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(asy
     res.json(await database.getUsersByEventAndStatus(req.params.eventId, req.params.status))
 }))
 
-
-// event ranking logic only sorts by closest event right now
 app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
-    var userId = req.query.userId;
-    var latitude = req.query.latitude;
-    var longitude = req.query.longitude;
+    var {userId, latitude, longitude} = req.query;
     if (typeof userId === 'undefined' || typeof latitude === 'undefined' ||
-        typeof longitude === 'undefined') {
+    typeof longitude} === 'undefined') {
         res.status(500).send({ error: 'Invalid parameters' })
     } else {
         var events = await database.getFriendsEvents(userId);
