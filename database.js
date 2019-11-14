@@ -45,7 +45,9 @@ exports.deleteUser = deleteEntity("users");
 exports.getUserEvents = getEntities("userEvents");
 exports.getUserEvent = getEntity("userEvents");
 exports.createUserEvent = createEntity("userEvents");
-exports.deleteUserEvent = deleteEntity("userEvents");
+//exports.deleteUserEvent = deleteEntity("userEvents");
+
+
 
 exports.getEventsByUserAndStatus = async function(userId, status){
 	var query = {userId: userId, status: status};
@@ -59,4 +61,9 @@ exports.getUsersByEventAndStatus = async function(eventId, status){
     var userEvents = await exports.getUserEvents()
     var userIds = userEvents.map(e => ObjectId(e.userId))
     return await db.collection("users").find({_id: {$in: userIds}}).toArray()
+}
+
+exports.deleteUserEvent = async function(userId, eventId){
+	var query = {userId: userId, eventId: eventId}
+	return await db.collection("userEvents").deleteOne(query);
 }

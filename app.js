@@ -265,6 +265,11 @@ app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
     }
 }))
 
+app.delete("/userEvents", asyncMiddleware(async(req, res, next) => {
+    var {userId, eventId} = req.query;
+    res.json(await db.deleteUserEvent(userId, eventId));
+}))
+
 
 
 app.listen(process.env.PORT || 5000);
