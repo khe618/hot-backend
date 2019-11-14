@@ -28,15 +28,19 @@ function deg2rad(deg) {
 }
 
 function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+  if (typeof lat1 === 'undefined' || typeof lon1 === 'undefined' ||
+      typeof lat2 === 'undefined' || typeof lon2 === 'undefined') {
+    return Infinity;
+  }
   var R = 6371; // Radius of the earth in km
   var dLat = deg2rad(lat2-lat1);
-  var dLon = deg2rad(lon2-lon1); 
-  var a = 
+  var dLon = deg2rad(lon2-lon1);
+  var a =
     Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
     Math.sin(dLon/2) * Math.sin(dLon/2)
-    ; 
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    ;
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   var d = R * c; // Distance in km
   return d;
 }
@@ -91,7 +95,7 @@ app.get('/docs', (req, res) => {
  *         schema:
  *           type: object
  *           properties:
- *             _id: 
+ *             _id:
  *               type: ObjectId
  *               description: The MongoDb ObjectId. Should match the eventId parameter
  *             name:
@@ -112,7 +116,7 @@ app.get('/docs', (req, res) => {
  *             longitude:
  *               type: float
  *               description:
- *                 The longitude coordinates of the event location    
+ *                 The longitude coordinates of the event location
  *             tags:
  *               type: Array
  *               description:
@@ -121,7 +125,7 @@ app.get('/docs', (req, res) => {
  *               type: string
  *               description:
  *                 The admin who created the event
- * 
+ *
  */
 app.get("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
     res.json(await database.getEvent(req.params.eventId));
@@ -183,14 +187,84 @@ app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(asy
     res.json(await database.getUsersByEventAndStatus(req.params.eventId, req.params.status))
 }))
 
+// function deprecated since front end no longer wants it
 app.get("/nearestEvents", asyncMiddleware(async (req, res, next) => {
     var latitude = req.query.latitude;
     var longitude = req.query.longitude;
     var events = await database.getEvents();
-    result.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude) - 
-        getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude))
+    var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude) -
+        getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude));
     res.json(result)
 }))
 
-app.listen(process.env.PORT || 5000);
+// event ranking logic only sorts by closest event right now
+app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
+    var userID = req.query.userID;
+    var latitude = req.query.latitude;
+    var longitude = req.query.longitude;
+    if (typeof userID === 'undefined' || typeof latitude === 'undefined' ||
+        typeof longitude === 'undefined') {
+        res.status(500).send({ error: 'Invalid parameters' })
+    } else {
+        var events = await database.getEvents();
+        var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude) -
+            getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude));
+        res.json(result)
+    }
+}))
 
+app.get("/adminEvents", asyncMiddleware(async(req, res, next) => {
+    var admin = req.query.admin;
+    if (typeof admin === 'undefined') {
+        res.status(500).send({error: 'Invalid parameter'});
+    } else {
+        var adminEvents = [];
+        var events = await database.getEvents();
+        var numEvents = events.length;
+        for (var i = 0; i < numEvents; i++) {
+            if (Array.isArray(events[i].admins) &&
+                events[i].admins.includes(admin)) {
+                adminEvents.push(events[i]);
+            }
+        }
+        res.json(adminEvents);
+    }
+}))
+
+app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
+    var username = req.query.username;
+    if (typeof username === 'undefined') {
+        res.status(500).send({error: 'Invalid parameter'});
+    } else {
+        var users = await database.getUsers();
+        var numUsers = users.length;
+        for (var i = 0; i < numUsers; i++) {
+            if (users[i].username === username) {
+                res.join(users[i]);
+                return;
+            }
+        }
+        res.status(500).send({error: 'No user with specified username found'});
+    }
+}))
+
+app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
+    var email = req.query.email;
+    if (typeof email === 'undefined') {
+        res.status(500).send({error: 'Invalid parameter'});
+    } else {
+        var users = await database.getUsers();
+        var numUsers = users.length;
+        for (var i = 0; i < numUsers; i++) {
+            if (users[i].email === email) {
+                res.join(users[i]);
+                return;
+            }
+        }
+        res.status(500).send({error: 'No user with specified username found'});
+    }
+}))
+
+
+
+app.listen(process.env.PORT || 5000);
