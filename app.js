@@ -267,7 +267,7 @@ app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
 
 app.delete("/userEvents", asyncMiddleware(async(req, res, next) => {
     var {userId, eventId} = req.query;
-    res.json(await db.deleteUserEvent(userId, eventId));
+    res.json(await database.deleteUserEvent(userId, eventId));
 }))
 
 
