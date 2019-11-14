@@ -192,7 +192,7 @@ app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(asy
 app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
     var {userId, latitude, longitude} = req.query;
     if (typeof userId === 'undefined' || typeof latitude === 'undefined' ||
-    typeof longitude} === 'undefined') {
+    typeof longitude === 'undefined') {
         res.status(500).send({ error: 'Invalid parameters' })
     } else {
         var events = await database.getFriendsEvents(userId);
