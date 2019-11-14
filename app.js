@@ -199,14 +199,14 @@ app.get("/nearestEvents", asyncMiddleware(async (req, res, next) => {
 
 // event ranking logic only sorts by closest event right now
 app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
-    var userID = req.query.userID;
+    var userId = req.query.userId;
     var latitude = req.query.latitude;
     var longitude = req.query.longitude;
-    if (typeof userID === 'undefined' || typeof latitude === 'undefined' ||
+    if (typeof userId === 'undefined' || typeof latitude === 'undefined' ||
         typeof longitude === 'undefined') {
         res.status(500).send({ error: 'Invalid parameters' })
     } else {
-        var events = await database.getEvents();
+        var events = await database.getFriendsEvents(userId);
         var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude) -
             getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude));
         res.json(result)
