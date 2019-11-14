@@ -70,10 +70,13 @@ exports.deleteUserEvent = async function(userId, eventId){
 
 exports.getFriendsEvents = async function(userId){
 	var user = await exports.getUser(userId);
-	console.log(user)
 	var userEvents = await db.collection("userEvents").find({userId: {$in: user.friends}}).toArray()
 	var eventIds = userEvents.map(x => ObjectId(x.eventId))
-	console.log(eventIds)
 	return await db.collection("events").find({_id: {$in: eventIds}}).toArray()
+}
+
+exports.getEventsByTag = async function(tag){
+	var query = {tags: tag}
+	return await db.collection("events").find(query).toArray()
 }
 
