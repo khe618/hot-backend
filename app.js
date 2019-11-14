@@ -200,7 +200,7 @@ app.get("/nearestEvents", asyncMiddleware(async (req, res, next) => {
 
 // event ranking logic only sorts by closest event right now
 app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
-    var userID = req.query.userID;
+    var username = req.query.username;
     var latitude = req.query.latitude;
     var longitude = req.query.longitude;
     if (typeof userID === 'undefined' || typeof latitude === 'undefined' ||
@@ -283,10 +283,10 @@ app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => 
     var userEvents = await database.getUserEvents();
     var friendsAttending = []
     for (var i = 0; i < userEvents.length; i++) {
-        if (userEvents[i].eventName === eventName &&
-            user.friends.includes(userEvents[i].username) &&
+        if (userEvents[i].eventID === event._id &&
+            user.friends.includes(userEvents[i].userID) &&
             userEvents[i].status === status) {
-            friendsAttending.push(userEvents[i].username);
+            friendsAttending.push(userEvents[i].userID);
         }
     }
     res.send(requestedEvents);
