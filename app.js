@@ -55,7 +55,7 @@ const swaggerDefinition = {
     version: '1.0.0',
     description: 'Hot Backend',
   },
-  host: 'localhost:5000',
+  // host: 'localhost:5000',
   host: 'hot-backend.herokuapp.com',
   basePath: '/',
 };
@@ -188,15 +188,6 @@ app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(asy
     res.json(await database.getUsersByEventAndStatus(req.params.eventId, req.params.status))
 }))
 
-// function deprecated since front end no longer wants it
-app.get("/nearestEvents", asyncMiddleware(async (req, res, next) => {
-    var latitude = req.query.latitude;
-    var longitude = req.query.longitude;
-    var events = await database.getEvents();
-    var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.latitude, a.longitude) -
-        getDistanceFromLatLonInKm(latitude, longitude, b.latitude, b.longitude));
-    res.json(result)
-}))
 
 // event ranking logic only sorts by closest event right now
 app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
@@ -283,15 +274,36 @@ app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => 
     var userEvents = await database.getUserEvents();
     var friendsAttending = []
     for (var i = 0; i < userEvents.length; i++) {
-        if (userEvents[i].eventName === eventName &&
-            user.friends.includes(userEvents[i].username) &&
+        if (userEvents[i].eventID === event._id &&
+            user.friends.includes(userEvents[i].userID) &&
             userEvents[i].status === status) {
-            friendsAttending.push(userEvents[i].username);
+            friendsAttending.push(userEvents[i].userID);
         }
     }
     res.send(requestedEvents);
 }))
 
+app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
+    var username = req.query.username;
+    var status = req.query.status;
+    if (typeof username === 'undefined' || typeof status === 'undefined') {
+        res.status(500).send({error: 'Invalid parameter'});
+        return;
+    }
+    var user = await db.collection("users").findOne({username: username});
+    if (!user) {
+        res.status(500).send({error: 'No user with this username'});
+        return;
+    }
+    var userEvents = await database.getUserEvents();
+    var interestedEvents = []
+    for (var i = 0; i < userEvents.length; i++) {
+        if (userEvents[i].userID === user._id && userEvents[i].status === status) {
+            interestedEvents.push(userEvents[i].eventID);
+        }
+    }
+    res.send(interestedEvents);
 
+}))
 
 app.listen(process.env.PORT || 5000);
