@@ -55,6 +55,7 @@ const swaggerDefinition = {
     version: '1.0.0',
     description: 'Hot Backend',
   },
+  host: 'localhost:5000',
   host: 'hot-backend.herokuapp.com',
   basePath: '/',
 };
@@ -236,15 +237,12 @@ app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
     if (typeof username === 'undefined') {
         res.status(500).send({error: 'Invalid parameter'});
     } else {
-        var users = await database.getUsers();
-        var numUsers = users.length;
-        for (var i = 0; i < numUsers; i++) {
-            if (users[i].username === username) {
-                res.json(users[i]);
-                return;
-            }
+        var user = await db.collection("users").findOne({username: username});
+        if (!!user) {
+            res.send(user);
+        } else {
+            res.status(500).send({error: 'No user with this username'});
         }
-        res.status(500).send({error: 'No user with specified username found'});
     }
 }))
 
@@ -253,21 +251,45 @@ app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
     if (typeof email === 'undefined') {
         res.status(500).send({error: 'Invalid parameter'});
     } else {
-        var users = await database.getUsers();
-        var numUsers = users.length;
-        for (var i = 0; i < numUsers; i++) {
-            if (users[i].email === email) {
-                res.json(users[i]);
-                return;
-            }
+        var user = await db.collection("users").findOne({email: email});
+        if (!!user) {
+            res.send(user);
+        } else {
+            res.status(500).send({error: 'No user with this email'});
         }
-        res.status(500).send({error: 'No user with specified username found'});
     }
 }))
 
-app.delete("/userEvents", asyncMiddleware(async(req, res, next) => {
-    var {userId, eventId} = req.query;
-    res.json(await database.deleteUserEvent(userId, eventId));
+app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
+    var username = req.query.username;
+    var eventName = req.query.eventName;
+    var status = req.query.status;
+    if (typeof username === 'undefined' || typeof eventName === 'undefined' ||
+        typeof status === 'undefined') {
+        res.status(500).send({error: 'Invalid parameter'});
+        return;
+    }
+    var user = await db.collection("users").findOne({username: username});
+    var event = await db.collection("events").findOne({name: eventName});
+    if (!user) {
+        res.status(500).send({error: 'No user with this username'});
+        return;
+    }
+    if (!event) {
+        res.status(500).send({error: 'No event with this name'});
+        return;
+    }
+
+    var userEvents = await database.getUserEvents();
+    var friendsAttending = []
+    for (var i = 0; i < userEvents.length; i++) {
+        if (userEvents[i].eventName === eventName &&
+            user.friends.includes(userEvents[i].username) &&
+            userEvents[i].status === status) {
+            friendsAttending.push(userEvents[i].username);
+        }
+    }
+    res.send(requestedEvents);
 }))
 
 
