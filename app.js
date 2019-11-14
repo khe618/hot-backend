@@ -55,7 +55,7 @@ const swaggerDefinition = {
     version: '1.0.0',
     description: 'Hot Backend',
   },
-  host: 'localhost:5000',
+  // host: 'localhost:5000',
   host: 'hot-backend.herokuapp.com',
   basePath: '/',
 };
@@ -292,6 +292,22 @@ app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => 
     res.send(requestedEvents);
 }))
 
+app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
+    var username = req.query.username;
+    var status = req.query.status;
+    if (typeof username === 'undefined' || typeof status === 'undefined') {
+        res.status(500).send({error: 'Invalid parameter'});
+        return;
+    }
+    var userEvents = await database.getUserEvents();
+    var interestedEvents = []
+    for (var i = 0; i < userEvents.length; i++) {
+        if (userEvents[i].username === username && userEvents[i].status === status) {
+            interestedEvents.push(userEvents[i].eventName);
+        }
+    }
+    res.send(interestedEvents);
 
+}))
 
 app.listen(process.env.PORT || 5000);
