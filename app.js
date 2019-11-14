@@ -240,7 +240,7 @@ app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
         var numUsers = users.length;
         for (var i = 0; i < numUsers; i++) {
             if (users[i].username === username) {
-                res.join(users[i]);
+                res.json(users[i]);
                 return;
             }
         }
@@ -257,7 +257,7 @@ app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
         var numUsers = users.length;
         for (var i = 0; i < numUsers; i++) {
             if (users[i].email === email) {
-                res.join(users[i]);
+                res.json(users[i]);
                 return;
             }
         }
