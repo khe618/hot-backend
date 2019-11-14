@@ -299,11 +299,16 @@ app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
         res.status(500).send({error: 'Invalid parameter'});
         return;
     }
+    var user = await db.collection("users").findOne({username: username});
+    if (!user) {
+        res.status(500).send({error: 'No user with this username'});
+        return;
+    }
     var userEvents = await database.getUserEvents();
     var interestedEvents = []
     for (var i = 0; i < userEvents.length; i++) {
-        if (userEvents[i].username === username && userEvents[i].status === status) {
-            interestedEvents.push(userEvents[i].eventName);
+        if (userEvents[i].userID === user._id && userEvents[i].status === status) {
+            interestedEvents.push(userEvents[i].eventID);
         }
     }
     res.send(interestedEvents);
