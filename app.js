@@ -253,7 +253,7 @@ app.get("/events/tags/:tag", asyncMiddleware(async(req, res, next) => {
     res.json(await database.getEventsByTag(tag))
 }))
 
-/*app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
+app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
     var username = req.query.username;
     var eventName = req.query.eventName;
     var status = req.query.status;
@@ -306,6 +306,6 @@ app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
     }
     res.send(interestedEvents);
 
-}))*/
+}))
 
 app.listen(process.env.PORT || 5000);
