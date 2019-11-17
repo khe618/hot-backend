@@ -17,11 +17,22 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
+app.use(function(error, req, res, next) {
+  res.status(500).json({error: error.message });
+});
+
 const asyncMiddleware = fn =>
   (req, res, next) => {
     Promise.resolve(fn(req, res, next))
       .catch(next);
   };
+
+function validateUserEvents(req, res, next){
+    if (!("userId" in req.query && "eventId" in req.query)){
+        throw Error("Invalid parameters")
+    }
+    next()
+}
 
 function deg2rad(deg) {
   return deg * (Math.PI/180)
@@ -178,16 +189,14 @@ app.get("/userEvents/all", asyncMiddleware(async (req, res, next) => {
     res.json(await database.getUserEvents())
 }))
 
-app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
-    if ("userId" in req.query && "eventId" in req.query){
-        var {userId, eventId} = req.query;
-        console.log(userId)
-        console.log(eventId)
-        res.json(await database.getUserEvent(userId, eventId));
-    }
-    else{
-        res.send({error: "Invalid parameters"})
-    }
+app.get("/userEvents", validateUserEvents, asyncMiddleware(async (req, res, next) => {
+    /*if (!("userId" in req.query && "eventId" in req.query)){
+        throw Error("Invalid parameters")
+    }*/
+    var {userId, eventId} = req.query;
+    console.log(userId)
+    console.log(eventId)
+    res.json(await database.getUserEvent(userId, eventId));
 }))
 
 /*app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
