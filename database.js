@@ -43,8 +43,8 @@ exports.getUser = getEntity("users");
 exports.createUser = createEntity("users");
 exports.deleteUser = deleteEntity("users");
 exports.getUserEvents = getEntities("userEvents");
-exports.getUserEvent = getEntity("userEvents");
-exports.createUserEvent = createEntity("userEvents");
+//exports.getUserEvent = getEntity("userEvents");
+//exports.createUserEvent = createEntity("userEvents");
 //exports.deleteUserEvent = deleteEntity("userEvents");
 
 
@@ -65,6 +65,17 @@ exports.getUsersByEventAndStatus = async function(eventId, status){
 exports.deleteUserEvent = async function(userId, eventId){
 	var query = {userId: userId, eventId: eventId}
 	return await db.collection("userEvents").deleteOne(query);
+}
+
+exports.getUserEvent = async function(userId, eventId){
+	var query = {userId: userId, eventId: eventId};
+	return await db.collection("userEvents").findOne(query);
+}
+
+exports.createUserEvent = async function(userId, eventId, status){
+	var query = {userId: userId, eventId: eventId}
+	var obj = {userId: userId, eventId: eventId, status: status}
+	return await db.collection("userEvents").update(query, obj, {upsert:true})
 }
 
 exports.getFriendsEvents = async function(userId){

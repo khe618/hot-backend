@@ -163,17 +163,30 @@ app.get("/users", asyncMiddleware(async (req, res, next) => {
     res.json(await database.getUsers())
 }))
 
-app.get("/userEvents/:userEventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getUserEvent(req.params.userEventId))
-}))
-
-app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
+app.get("/userEvents/all", asyncMiddleware(async (req, res, next) => {
     res.json(await database.getUserEvents())
 }))
 
+app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
+    if ("userId" in req.query && "eventId" in req.query){
+        var {userId, eventId} = req.query;
+        console.log(userId)
+        console.log(eventId)
+        res.json(await database.getUserEvent(userId, eventId));
+    }
+    else{
+        res.send({error: "Invalid parameters"})
+    }
+}))
+
+/*app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
+    res.json(await database.getUserEvents())
+}))*/
+
 app.post("/userEvents", asyncMiddleware(async (req, res, next) => {
-    var result = await database.createUserEvent(req.body);
-    res.send(result.insertedId)
+    var {userId, eventId, status} = req.body;
+    var result = await database.createUserEvent(userId, eventId, status);
+    res.sendStatus(200)
 }))
 
 app.delete("/userEvents", asyncMiddleware(async (req, res, next) => {
@@ -205,7 +218,7 @@ app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
 app.get("/adminEvents", asyncMiddleware(async(req, res, next) => {
     var admin = req.query.admin;
     if (typeof admin === 'undefined') {
-        res.status(500).send({error: 'Invalid parameter'});
+        res.send({error: 'Invalid parameter'});
     } else {
         var adminEvents = [];
         var events = await database.getEvents();
@@ -223,13 +236,13 @@ app.get("/adminEvents", asyncMiddleware(async(req, res, next) => {
 app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
     var username = req.query.username;
     if (typeof username === 'undefined') {
-        res.status(500).send({error: 'Invalid parameter'});
+        res.send({error: 'Invalid parameter'});
     } else {
         var user = await db.collection("users").findOne({username: username});
         if (!!user) {
             res.send(user);
         } else {
-            res.status(500).send({error: 'No user with this username'});
+            res.send({error: 'No user with this username'});
         }
     }
 }))
@@ -237,13 +250,13 @@ app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
 app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
     var email = req.query.email;
     if (typeof email === 'undefined') {
-        res.status(500).send({error: 'Invalid parameter'});
+        res.send({error: 'Invalid parameter'});
     } else {
         var user = await db.collection("users").findOne({email: email});
         if (!!user) {
             res.send(user);
         } else {
-            res.status(500).send({error: 'No user with this email'});
+            res.send({error: 'No user with this email'});
         }
     }
 }))
@@ -259,17 +272,17 @@ app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => 
     var status = req.query.status;
     if (typeof username === 'undefined' || typeof eventName === 'undefined' ||
         typeof status === 'undefined') {
-        res.status(500).send({error: 'Invalid parameter'});
+        res.send({error: 'Invalid parameter'});
         return;
     }
     var user = await db.collection("users").findOne({username: username});
     var event = await db.collection("events").findOne({name: eventName});
     if (!user) {
-        res.status(500).send({error: 'No user with this username'});
+        res.send({error: 'No user with this username'});
         return;
     }
     if (!event) {
-        res.status(500).send({error: 'No event with this name'});
+        res.send({error: 'No event with this name'});
         return;
     }
 
@@ -289,12 +302,12 @@ app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
     var username = req.query.username;
     var status = req.query.status;
     if (typeof username === 'undefined' || typeof status === 'undefined') {
-        res.status(500).send({error: 'Invalid parameter'});
+        res.send({error: 'Invalid parameter'});
         return;
     }
     var user = await db.collection("users").findOne({username: username});
     if (!user) {
-        res.status(500).send({error: 'No user with this username'});
+        res.send({error: 'No user with this username'});
         return;
     }
     var userEvents = await database.getUserEvents();
