@@ -141,9 +141,20 @@ app.post("/events", asyncMiddleware(async (req, res, next) => {
     res.send(result.insertedId)
 }))
 
+
 app.get("/events", asyncMiddleware(async (req, res, next) => {
     res.json(await database.getEvents())
 }))
+
+app.post("/events/test", asyncMiddleware(async (req, res, next) => {
+    var result = await database.createTestEvent(req.body)
+    res.send(result.insertedId)
+}))
+
+app.get("/events/test", asyncMiddleware(async (req, res, next) => {
+    res.json(await database.getTestEvents())
+}))
+
 
 
 app.get("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
