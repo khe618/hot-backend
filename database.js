@@ -60,6 +60,7 @@ exports.getEventsByUserAndStatus = async function(userId, status){
 exports.getUsersByEventAndStatus = async function(eventId, status){
 	var query = {eventId: eventId, status: status};
     var userEvents = await exports.getUserEvents()
+    console.log(userEvents)
     var userIds = userEvents.map(e => ObjectId(e.userId))
     return await db.collection("users").find({_id: {$in: userIds}}).toArray()
 }
@@ -92,3 +93,10 @@ exports.getEventsByTag = async function(tag){
 	return await db.collection("events").find(query).toArray()
 }
 
+exports.getFriendsAttendingEvent = async function(userId, eventId, status){
+	var user = await exports.getUser(userId)
+	var friendsAttending = await db.collection("userEvents").find({userId: {$in: user.friends}, eventId: eventId, status: status}).toArray();
+	console.log(friendsAttending)
+	var friendsIds = friendsAttending.map(x => ObjectId(x.userId));
+	return await db.collection("users").find({_id: {$in: friendsIds}}).toArray()
+}

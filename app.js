@@ -286,17 +286,17 @@ app.get("/events/tags/:tag", asyncMiddleware(async(req, res, next) => {
     res.json(await database.getEventsByTag(tag))
 }))
 
-app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
-    var username = req.query.username;
-    var eventName = req.query.eventName;
+/*app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
+    var userId = req.query.userId;
+    var eventId = req.query.eventId;
     var status = req.query.status;
-    if (typeof username === 'undefined' || typeof eventName === 'undefined' ||
+    if (typeof userId === 'undefined' || typeof eventId === 'undefined' ||
         typeof status === 'undefined') {
         res.send({error: 'Invalid parameter'});
         return;
     }
-    var user = await db.collection("users").findOne({username: username});
-    var event = await db.collection("events").findOne({name: eventName});
+    var user = await database.getUser(userId)
+    var event = await database.getEvent(eventId)
     if (!user) {
         res.send({error: 'No user with this username'});
         return;
@@ -310,12 +310,17 @@ app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => 
     var friendsAttending = []
     for (var i = 0; i < userEvents.length; i++) {
         if (userEvents[i].eventID === event._id &&
-            user.friends.includes(userEvents[i].userID) &&
+            user.friends.includes(userEvents[i].userId) &&
             userEvents[i].status === status) {
-            friendsAttending.push(userEvents[i].userID);
+            friendsAttending.push(userEvents[i].userId);
         }
     }
     res.send(requestedEvents);
+}))*/
+
+app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
+    var {userId, eventId, status} = req.query;
+    res.json(await database.getFriendsAttendingEvent(userId, eventId, status))
 }))
 
 app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
