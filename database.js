@@ -52,15 +52,14 @@ exports.getTestEvents = getEntities("testEvents")
 
 exports.getEventsByUserAndStatus = async function(userId, status){
 	var query = {userId: userId, status: status};
-    var userEvents = await exports.getUserEvents()
+    var userEvents = await db.collection("userEvents").find(query).toArray()
     var eventIds = userEvents.map(e => ObjectId(e.eventId))
     return await db.collection("events").find({_id: {$in: eventIds}}).toArray()
 }
 
 exports.getUsersByEventAndStatus = async function(eventId, status){
 	var query = {eventId: eventId, status: status};
-    var userEvents = await exports.getUserEvents()
-    console.log(userEvents)
+    var userEvents = await db.collection("userEvents").find(query).toArray()
     var userIds = userEvents.map(e => ObjectId(e.userId))
     return await db.collection("users").find({_id: {$in: userIds}}).toArray()
 }
