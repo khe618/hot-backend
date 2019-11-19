@@ -99,3 +99,8 @@ exports.getFriendsAttendingEvent = async function(userId, eventId, status){
 	var friendsIds = friendsAttending.map(x => ObjectId(x.userId));
 	return await db.collection("users").find({_id: {$in: friendsIds}}).toArray()
 }
+
+exports.searchEvents = async function(query){
+	return await db.collection("events").find({$or: [{"name" : {$regex : query, $options:'i'}}, {"desc" : {$regex : query, $options:'i'}}, {"tags": {$regex : query, $options:'i'}}]}).toArray()
+}
+

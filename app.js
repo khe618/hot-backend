@@ -346,4 +346,9 @@ app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
 
 }))
 
+app.get("/search", asyncMiddleware(async(req, res, next) => {
+    var {query} = req.query;
+    res.json(await database.searchEvents(query));
+}))
+
 app.listen(process.env.PORT || 5000);
