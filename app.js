@@ -348,7 +348,9 @@ app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
 
 app.get("/search", asyncMiddleware(async(req, res, next) => {
     var {query} = req.query;
-    res.json(await database.searchEvents(query));
+    var userResults = await database.searchUsers(query);
+    var eventResults = await database.searchEvents(query)
+    res.json({users:userResults, events: eventResults})
 }))
 
 app.listen(process.env.PORT || 5000);

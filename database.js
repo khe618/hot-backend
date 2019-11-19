@@ -104,3 +104,7 @@ exports.searchEvents = async function(query){
 	return await db.collection("events").find({$or: [{"name" : {$regex : query, $options:'i'}}, {"desc" : {$regex : query, $options:'i'}}, {"tags": {$regex : query, $options:'i'}}]}).toArray()
 }
 
+exports.searchUsers = async function(query){
+	return await db.collection("users").find({$or: [{"username" : {$regex : query, $options:'i'}}, {"firstname" : {$regex : query, $options:'i'}}, {"lastname": {$regex : query, $options:'i'}}]}).toArray()
+}
+
