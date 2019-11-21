@@ -112,7 +112,7 @@
      *             name:
      *               type: string
      *               description: Name of the event
-     *             description:
+     *             desc:
      *               type: string
      *               description:
      *                 Description of the event
@@ -271,7 +271,7 @@
      *         description: Must be a 24 digit hexadecimal number
      *     responses:
      *       200:
-     *         description: Event object
+     *         description: User object
      *         schema:
      *           type: object
      *           properties:
@@ -425,6 +425,21 @@
      *     responses:
      *       200:
      *         description: Returns a specific userEvents object
+     *         schema:
+     *           type: object
+     *           properties:
+     *             _id:
+     *               type: ObjectId
+     *               description: The MongoDb ObjectId. Should match the eventId parameter
+     *             userId:
+     *               type: ObjectId
+     *               description: The MongoDb ObjectId. Should match the eventId parameter
+     *             eventId:
+     *               type: ObjectId
+     *               description: The MongoDb ObjectId. Should match the eventId parameter
+     *             status:
+     *               type: string
+     *               description: One of {going, interested, declined}
      *
      */
     app.get("/userEvents", validateUserEvents, asyncMiddleware(async (req, res, next) => {
@@ -501,14 +516,91 @@
         res.json(await database.deleteUserEvent(userId, eventId));
     }))
 
+    /**
+     * @swagger
+     * /userEvents/users/{userId}/{status}:
+     *   get:
+     *     summary: Get events with same user and status
+     *     description: Returns list of event objects which user submitted specific status to
+     *     tags:
+     *       - userEvents
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         type: string
+     *         required: true
+     *         description: Must be a 24 digit hexadecimal number
+     *       - in: path
+     *         name: status
+     *         type: string
+     *         required: true
+     *         description: One of {going, interested, declined}
+     *     responses:
+     *       200:
+     *         description: Returns list of event objects
+     *
+     */
     app.get("/userEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
         res.json(await database.getEventsByUserAndStatus(req.params.userId, req.params.status));
     }))
 
+    /**
+     * @swagger
+     * /userEvents/events/{eventId}/{status}:
+     *   get:
+     *     summary: Get users with same event and status
+     *     description: Returns list of users objects corresponding to users attending a specific event and having marked a specific status
+     *     tags:
+     *       - userEvents
+     *     parameters:
+     *       - in: path
+     *         name: eventId
+     *         type: string
+     *         required: true
+     *         description: Must be a 24 digit hexadecimal number
+     *       - in: path
+     *         name: status
+     *         type: string
+     *         required: true
+     *         description: One of {going, interested, declined}
+     *     responses:
+     *       200:
+     *         description: Returns list of user objects
+     *
+     */
     app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
         res.json(await database.getUsersByEventAndStatus(req.params.eventId, req.params.status));
     }))
 
+    /**
+     * @swagger
+     * /exploreEvents:
+     *   get:
+     *     summary: Get events for a user
+     *     description: Returns list of events ranked by interest for a specific user
+     *     tags:
+     *       - exploreEvents
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         type: string
+     *         required: true
+     *         description: Must be a 24 digit hexadecimal number
+     *       - in: path
+     *         name: latitude
+     *         type: float
+     *         required: true
+     *         description: Between 0 and 90
+     *       - in: path
+     *         name: longitude
+     *         type: float
+     *         required: true
+     *         description: Between 0 and 180
+     *     responses:
+     *       200:
+     *         description: Returns list of event objects
+     *
+     */
     app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
         var {userId, latitude, longitude} = req.query;
         if (typeof userId === 'undefined' || typeof latitude === 'undefined' ||
@@ -522,6 +614,25 @@
         }
     }))
 
+    /**
+     * @swagger
+     * /adminEvents:
+     *   get:
+     *     summary: Get events with same admin
+     *     description: Returns list of all events with a specific admin
+     *     tags:
+     *       - adminEvents
+     *     parameters:
+     *       - in: path
+     *         name: admin
+     *         type: string
+     *         required: true
+     *         description: Must be a 24 digit hexadecimal number
+     *     responses:
+     *       200:
+     *         description: Returns list of event objects
+     *
+     */
     app.get("/adminEvents", asyncMiddleware(async(req, res, next) => {
         var admin = req.query.admin;
         if (typeof admin === 'undefined') {
@@ -540,6 +651,27 @@
         }
     }))
 
+    /**
+     * @swagger
+     * /queryUserByUsername:
+     *   get:
+     *     summary: Get a user
+     *     description: Returns user with matching username
+     *     tags:
+     *       - queryUserByUsername
+     *     parameters:
+     *       - in: path
+     *         name: username
+     *         type: string
+     *         required: true
+     *         description: Username of a user
+     *     responses:
+     *       '200':
+     *         description: Returns a user with matching username
+     *       '500':
+     *         description: Error if no user with matching username found
+     *
+     */
     app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
         var username = req.query.username;
         if (typeof username === 'undefined') {
@@ -554,6 +686,27 @@
         }
     }))
 
+    /**
+     * @swagger
+     * /queryUserByEmail:
+     *   get:
+     *     summary: Get a user
+     *     description: Returns user with matching email
+     *     tags:
+     *       - queryUserByEmail
+     *     parameters:
+     *       - in: path
+     *         name: email
+     *         type: string
+     *         required: true
+     *         description: Email of a user
+     *     responses:
+     *       '200':
+     *         description: Returns a user with matching email
+     *       '500':
+     *         description: Error if no user with matching email found
+     *
+     */
     app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
         var email = req.query.email;
         if (typeof email === 'undefined') {
@@ -568,6 +721,25 @@
         }
     }))
 
+    /**
+     * @swagger
+     * /events/tags/{tag}:
+     *   get:
+     *     summary: Get all events with specific tag
+     *     description: Returns list of all event objects with specific tag
+     *     tags:
+     *       - events
+     *     parameters:
+     *       - in: path
+     *         name: tag
+     *         type: string
+     *         required: true
+     *         description: Tag of an event
+     *     responses:
+     *       200:
+     *         description: Returns list of event objects
+     *
+     */
     app.get("/events/tags/:tag", asyncMiddleware(async(req, res, next) => {
         var tag = req.params.tag;
         res.json(await database.getEventsByTag(tag));
@@ -605,11 +777,41 @@
         res.send(requestedEvents);
     }))*/
 
+    /**
+     * @swagger
+     * /queryFriendsAttendingEvent:
+     *   get:
+     *     summary: Get friends attending an event
+     *     description: Get list of friends' user IDs attending an event
+     *     tags:
+     *       - queryFriendsAttendingEvent
+     *     parameters:
+     *       - in: path
+     *         name: userId
+     *         type: string
+     *         required: true
+     *         description: Must be a 24 digit hexadecimal number
+     *       - in: path
+     *         name: eventId
+     *         type: string
+     *         required: true
+     *         description: Must be a 24 digit hexadecimal number
+     *       - in: path
+     *         name: status
+     *         type: string
+     *         required: true
+     *         description: User's status regarding particular event
+     *     responses:
+     *       200:
+     *         description: Returns list of user ID's
+     *
+     */
     app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
         var {userId, eventId, status} = req.query;
         res.json(await database.getFriendsAttendingEvent(userId, eventId, status))
     }))
 
+    // this is repeated function so not including it in documentations
     app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
         var username = req.query.username;
         var status = req.query.status;
@@ -633,6 +835,25 @@
 
     }))
 
+    /**
+     * @swagger
+     * /search:
+     *   get:
+     *     summary: Get users and events matching query
+     *     description: Get list of users and events with any fields that match the query
+     *     tags:
+     *       - search
+     *     parameters:
+     *       - in: path
+     *         name: query
+     *         type: string
+     *         required: true
+     *         description: A string to query
+     *     responses:
+     *       200:
+     *         description: Json containing user and event objects
+     *
+     */
     app.get("/search", asyncMiddleware(async(req, res, next) => {
         var {query} = req.query;
         var userResults = await database.searchUsers(query);
