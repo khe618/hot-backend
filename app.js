@@ -451,9 +451,8 @@
             throw Error("Invalid parameters")
         }*/
         var {userId, eventId} = req.query;
-        console.log(userId);
-        console.log(eventId);
-        res.json(await database.getUserEvent(userId, eventId));
+        var query = {userId: userId, eventId: eventId}
+        res.json(await database.getUserEvent(query));
     }))
 
     /**
@@ -517,7 +516,8 @@
      */
     app.delete("/userEvents", asyncMiddleware(async (req, res, next) => {
         var {userId, eventId} = req.query;
-        res.json(await database.deleteUserEvent(userId, eventId));
+        var query = {userId: userId, eventId: eventId}
+        res.json(await database.deleteUserEvent(query));
     }))
 
     /**
@@ -681,7 +681,8 @@
         if (typeof username === 'undefined') {
             res.send({error: 'Invalid parameter'});
         } else {
-            var user = await database.getUserByUsername(username)
+            var query = {username: username}
+            var user = await database.getUser(query)
             if (!!user) {
                 res.send(user);
             } else {
@@ -716,7 +717,8 @@
         if (typeof email === 'undefined') {
             res.send({error: 'Invalid parameter'});
         } else {
-            var user = await database.getUserByEmail(email)
+            var query = {email: email}
+            var user = await database.getUser(query)
             if (!!user) {
                 res.send(user);
             } else {
@@ -823,7 +825,8 @@
             res.send({error: 'Invalid parameter'});
             return;
         }
-        var user = await database.getUserByUsername(username)
+        var query = {username: username}
+        var user = await database.getUser(query)
         if (!user) {
             res.send({error: 'No user with this username'});
             return;

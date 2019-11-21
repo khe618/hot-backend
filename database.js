@@ -51,14 +51,16 @@ module.exports = async function(production){
 	exports.createUser = createEntity("users");
 	exports.deleteUser = deleteEntity("users");
 	exports.getUserEvents = getEntities("userEvents");
+	exports.getUserEvent = getEntity("userEvents");
+	exports.deleteUserEvent = deleteEntity("userEvents");
 	exports.createTestEvent = createEntity("testEvents")
 	exports.getTestEvents = getEntities("testEvents")
+
 
 	exports.getEntities = getEntities;
 	exports.getEntity = getEntity;
 	exports.deleteEntity = deleteEntity;
 	exports.createEntity = createEntity;
-
 
 	exports.getEventsByUserAndStatus = async function(userId, status){
 		var query = {userId: userId, status: status};
@@ -74,15 +76,6 @@ module.exports = async function(production){
 	    return await db.collection("users").find({_id: {$in: userIds}}).toArray()
 	}
 
-	exports.deleteUserEvent = async function(userId, eventId){
-		var query = {userId: userId, eventId: eventId}
-		return await db.collection("userEvents").deleteOne(query);
-	}
-
-	exports.getUserEvent = async function(userId, eventId){
-		var query = {userId: userId, eventId: eventId};
-		return await db.collection("userEvents").findOne(query);
-	}
 
 	exports.createUserEvent = async function(userId, eventId, status){
 		var query = {userId: userId, eventId: eventId}
@@ -116,14 +109,6 @@ module.exports = async function(production){
 
 	exports.searchUsers = async function(query){
 		return await db.collection("users").find({$or: [{"username" : {$regex : query, $options:'i'}}, {"firstname" : {$regex : query, $options:'i'}}, {"lastname": {$regex : query, $options:'i'}}]}).toArray()
-	}
-
-	exports.getUserByUsername = async function(username){
-		return await db.collection("users").findOne({username: username})
-	}
-
-	exports.getUserByEmail = async function(email){
-		return await db.collection("users").findOne({email: email})
 	}
 
 	exports.removeAll = async function(collection){
