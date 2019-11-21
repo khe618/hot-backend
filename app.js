@@ -1,356 +1,357 @@
-const
-    https = require("https"),
-    bodyParser = require("body-parser"),
-    express = require("express"),
-    path = require("path"),
-    MongoClient = require("mongodb").MongoClient,
-    ObjectId = require('mongodb').ObjectId;
-    request = require("request"),
-    swaggerJSDoc = require('swagger-jsdoc'),
-    database = require("./database"),
-    admin = require('firebase-admin');
+(async function(){
+    const https = require("https"),
+          bodyParser = require("body-parser"),
+          express = require("express"),
+          path = require("path"),
+          MongoClient = require("mongodb").MongoClient,
+          ObjectId = require('mongodb').ObjectId;
+          request = require("request"),
+          swaggerJSDoc = require('swagger-jsdoc'),
+          database = await require("./database"),
+          admin = require('firebase-admin');
+    var app = express();
 
-var app = express();
+    app.use(bodyParser.urlencoded({
+        extended: true
+    }));
+    app.use(bodyParser.json());
 
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
-app.use(bodyParser.json());
+    app.use(function(error, req, res, next) {
+      res.status(500).json({error: error.message });
+    });
 
-app.use(function(error, req, res, next) {
-  res.status(500).json({error: error.message });
-});
+    const asyncMiddleware = fn =>
+      (req, res, next) => {
+        Promise.resolve(fn(req, res, next))
+          .catch(next);
+      };
 
-const asyncMiddleware = fn =>
-  (req, res, next) => {
-    Promise.resolve(fn(req, res, next))
-      .catch(next);
-  };
-
-function validateUserEvents(req, res, next){
-    if (!("userId" in req.query && "eventId" in req.query)){
-        throw Error("Invalid parameters")
+    function validateUserEvents(req, res, next){
+        if (!("userId" in req.query && "eventId" in req.query)){
+            throw Error("Invalid parameters")
+        }
+        next()
     }
-    next()
-}
 
-function deg2rad(deg) {
-  return deg * (Math.PI/180)
-}
-
-function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
-  if (typeof lat1 === 'undefined' || typeof lon1 === 'undefined' ||
-      typeof lat2 === 'undefined' || typeof lon2 === 'undefined') {
-    return Infinity;
-  }
-  var R = 6371; // Radius of the earth in km
-  var dLat = deg2rad(lat2-lat1);
-  var dLon = deg2rad(lon2-lon1);
-  var a =
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon/2) * Math.sin(dLon/2)
-    ;
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  var d = R * c; // Distance in km
-  return d;
-}
-
-
-
-
-// -- setup up swagger-jsdoc --
-const swaggerDefinition = {
-  info: {
-    title: 'Hot Backend',
-    version: '1.0.0',
-    description: 'Hot Backend',
-  },
-  // host: 'localhost:5000',
-  host: 'hot-backend.herokuapp.com',
-  basePath: '/',
-};
-const options = {
-  swaggerDefinition,
-  apis: [path.resolve(__dirname, 'app.js')],
-};
-const swaggerSpec = swaggerJSDoc(options);
-
-// -- routes for docs and generated swagger spec --
-
-app.get('/swagger.json', (req, res) => {
-  res.setHeader('Content-Type', 'application/json');
-  res.send(swaggerSpec);
-});
-
-app.get('/docs', (req, res) => {
-  res.sendFile(path.join(__dirname, 'redoc.html'));
-});
-
-/**
- * @swagger
- * /events/{eventId}:
- *   get:
- *     summary: Gets an event
- *     description: Returns an event object with the specified id
- *     tags:
- *       - events
- *     parameters:
- *       - in: path
- *         name: eventId
- *         type: string
- *         required: true
- *         description: Must be a 24 digit hexadecimal number
- *     responses:
- *       200:
- *         description: Event object
- *         schema:
- *           type: object
- *           properties:
- *             _id:
- *               type: ObjectId
- *               description: The MongoDb ObjectId. Should match the eventId parameter
- *             name:
- *               type: string
- *               description: Name of the event
- *             description:
- *               type: string
- *               description:
- *                 Description of the event
- *             date:
- *               type: Date
- *               description:
- *                 Date of the event. Includes time
- *             latitude:
- *               type: float
- *               description:
- *                 The latitude coordinates of the event location
- *             longitude:
- *               type: float
- *               description:
- *                 The longitude coordinates of the event location
- *             tags:
- *               type: Array
- *               description:
- *                 List of tags associated with the event
- *             admin:
- *               type: string
- *               description:
- *                 The admin who created the event
- *
- */
-app.get("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getEvent(req.params.eventId));
-}))
-
-app.delete("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.deleteEvent(req.params.eventId))
-}))
-
-app.post("/events", asyncMiddleware(async (req, res, next) => {
-    var result = await database.createEvent(req.body)
-    res.send(result.insertedId)
-}))
-
-
-app.get("/events", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getEvents())
-}))
-
-app.post("/events/test", asyncMiddleware(async (req, res, next) => {
-    var result = await database.createTestEvent(req.body)
-    res.send(result.insertedId)
-}))
-
-app.get("/events/test", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getTestEvents())
-}))
-
-
-
-app.get("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getUser(req.params.userId))
-}))
-
-app.delete("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.deleteUser(req.params.userId))
-}))
-
-app.post("/users", asyncMiddleware(async (req, res, next) => {
-    var result = await database.createUser(req.body);
-    res.send(result.insertedId)
-}))
-
-app.get("/users", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getUsers())
-}))
-
-app.get("/userEvents/all", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getUserEvents())
-}))
-
-app.get("/userEvents", validateUserEvents, asyncMiddleware(async (req, res, next) => {
-    /*if (!("userId" in req.query && "eventId" in req.query)){
-        throw Error("Invalid parameters")
-    }*/
-    var {userId, eventId} = req.query;
-    console.log(userId)
-    console.log(eventId)
-    res.json(await database.getUserEvent(userId, eventId));
-}))
-
-/*app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getUserEvents())
-}))*/
-
-app.post("/userEvents", asyncMiddleware(async (req, res, next) => {
-    var {userId, eventId, status} = req.body;
-    var result = await database.createUserEvent(userId, eventId, status);
-    res.sendStatus(200)
-}))
-
-app.delete("/userEvents", asyncMiddleware(async (req, res, next) => {
-    var {userId, eventId} = req.query;
-    res.json(await database.deleteUserEvent(userId, eventId));
-}))
-
-app.get("/userEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getEventsByUserAndStatus(req.params.userId, req.params.status))
-}))
-
-app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
-    res.json(await database.getUsersByEventAndStatus(req.params.eventId, req.params.status))
-}))
-
-app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
-    var {userId, latitude, longitude} = req.query;
-    if (typeof userId === 'undefined' || typeof latitude === 'undefined' ||
-    typeof longitude === 'undefined') {
-        res.status(500).send({ error: 'Invalid parameters' })
-    } else {
-        var events = await database.getFriendsEvents(userId);
-        var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.loc.lat, a.loc.lng) -
-            getDistanceFromLatLonInKm(latitude, longitude, b.loc.lat, b.loc.lng));
-        res.json(result)
+    function deg2rad(deg) {
+      return deg * (Math.PI/180)
     }
-}))
 
-app.get("/adminEvents", asyncMiddleware(async(req, res, next) => {
-    var admin = req.query.admin;
-    if (typeof admin === 'undefined') {
-        res.send({error: 'Invalid parameter'});
-    } else {
-        var adminEvents = [];
-        var events = await database.getEvents();
-        var numEvents = events.length;
-        for (var i = 0; i < numEvents; i++) {
-            if (Array.isArray(events[i].admins) &&
-                events[i].admins.includes(admin)) {
-                adminEvents.push(events[i]);
+    function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+      if (typeof lat1 === 'undefined' || typeof lon1 === 'undefined' ||
+          typeof lat2 === 'undefined' || typeof lon2 === 'undefined') {
+        return Infinity;
+      }
+      var R = 6371; // Radius of the earth in km
+      var dLat = deg2rad(lat2-lat1);
+      var dLon = deg2rad(lon2-lon1);
+      var a =
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon/2) * Math.sin(dLon/2)
+        ;
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      var d = R * c; // Distance in km
+      return d;
+    }
+
+
+
+
+    // -- setup up swagger-jsdoc --
+    const swaggerDefinition = {
+      info: {
+        title: 'Hot Backend',
+        version: '1.0.0',
+        description: 'Hot Backend',
+      },
+      // host: 'localhost:5000',
+      host: 'hot-backend.herokuapp.com',
+      basePath: '/',
+    };
+    const options = {
+      swaggerDefinition,
+      apis: [path.resolve(__dirname, 'app.js')],
+    };
+    const swaggerSpec = swaggerJSDoc(options);
+
+    // -- routes for docs and generated swagger spec --
+
+    app.get('/swagger.json', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(swaggerSpec);
+    });
+
+    app.get('/docs', (req, res) => {
+      res.sendFile(path.join(__dirname, 'redoc.html'));
+    });
+
+    /**
+     * @swagger
+     * /events/{eventId}:
+     *   get:
+     *     summary: Gets an event
+     *     description: Returns an event object with the specified id
+     *     tags:
+     *       - events
+     *     parameters:
+     *       - in: path
+     *         name: eventId
+     *         type: string
+     *         required: true
+     *         description: Must be a 24 digit hexadecimal number
+     *     responses:
+     *       200:
+     *         description: Event object
+     *         schema:
+     *           type: object
+     *           properties:
+     *             _id:
+     *               type: ObjectId
+     *               description: The MongoDb ObjectId. Should match the eventId parameter
+     *             name:
+     *               type: string
+     *               description: Name of the event
+     *             description:
+     *               type: string
+     *               description:
+     *                 Description of the event
+     *             date:
+     *               type: Date
+     *               description:
+     *                 Date of the event. Includes time
+     *             latitude:
+     *               type: float
+     *               description:
+     *                 The latitude coordinates of the event location
+     *             longitude:
+     *               type: float
+     *               description:
+     *                 The longitude coordinates of the event location
+     *             tags:
+     *               type: Array
+     *               description:
+     *                 List of tags associated with the event
+     *             admin:
+     *               type: string
+     *               description:
+     *                 The admin who created the event
+     *
+     */
+    app.get("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getEvent(req.params.eventId));
+    }))
+
+    app.delete("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.deleteEvent(req.params.eventId))
+    }))
+
+    app.post("/events", asyncMiddleware(async (req, res, next) => {
+        var result = await database.createEvent(req.body)
+        res.send(result.insertedId)
+    }))
+
+
+    app.get("/events", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getEvents())
+    }))
+
+    app.post("/events/test", asyncMiddleware(async (req, res, next) => {
+        var result = await database.createTestEvent(req.body)
+        res.send(result.insertedId)
+    }))
+
+    app.get("/events/test", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getTestEvents())
+    }))
+
+
+
+    app.get("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getUser(req.params.userId))
+    }))
+
+    app.delete("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.deleteUser(req.params.userId))
+    }))
+
+    app.post("/users", asyncMiddleware(async (req, res, next) => {
+        var result = await database.createUser(req.body);
+        res.send(result.insertedId)
+    }))
+
+    app.get("/users", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getUsers())
+    }))
+
+    app.get("/userEvents/all", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getUserEvents())
+    }))
+
+    app.get("/userEvents", validateUserEvents, asyncMiddleware(async (req, res, next) => {
+        /*if (!("userId" in req.query && "eventId" in req.query)){
+            throw Error("Invalid parameters")
+        }*/
+        var {userId, eventId} = req.query;
+        console.log(userId)
+        console.log(eventId)
+        res.json(await database.getUserEvent(userId, eventId));
+    }))
+
+    /*app.get("/userEvents", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getUserEvents())
+    }))*/
+
+    app.post("/userEvents", asyncMiddleware(async (req, res, next) => {
+        var {userId, eventId, status} = req.body;
+        var result = await database.createUserEvent(userId, eventId, status);
+        res.sendStatus(200)
+    }))
+
+    app.delete("/userEvents", asyncMiddleware(async (req, res, next) => {
+        var {userId, eventId} = req.query;
+        res.json(await database.deleteUserEvent(userId, eventId));
+    }))
+
+    app.get("/userEvents/users/:userId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getEventsByUserAndStatus(req.params.userId, req.params.status))
+    }))
+
+    app.get("/userEvents/events/:eventId([0-9a-f]{24})/:status", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getUsersByEventAndStatus(req.params.eventId, req.params.status))
+    }))
+
+    app.get("/exploreEvents", asyncMiddleware(async (req, res, next) => {
+        var {userId, latitude, longitude} = req.query;
+        if (typeof userId === 'undefined' || typeof latitude === 'undefined' ||
+        typeof longitude === 'undefined') {
+            res.status(500).send({ error: 'Invalid parameters' })
+        } else {
+            var events = await database.getFriendsEvents(userId);
+            var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.loc.lat, a.loc.lng) -
+                getDistanceFromLatLonInKm(latitude, longitude, b.loc.lat, b.loc.lng));
+            res.json(result)
+        }
+    }))
+
+    app.get("/adminEvents", asyncMiddleware(async(req, res, next) => {
+        var admin = req.query.admin;
+        if (typeof admin === 'undefined') {
+            res.send({error: 'Invalid parameter'});
+        } else {
+            var adminEvents = [];
+            var events = await database.getEvents();
+            var numEvents = events.length;
+            for (var i = 0; i < numEvents; i++) {
+                if (Array.isArray(events[i].admins) &&
+                    events[i].admins.includes(admin)) {
+                    adminEvents.push(events[i]);
+                }
+            }
+            res.json(adminEvents);
+        }
+    }))
+
+    app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
+        var username = req.query.username;
+        if (typeof username === 'undefined') {
+            res.send({error: 'Invalid parameter'});
+        } else {
+            var user = await database.getUserByUsername(username)
+            if (!!user) {
+                res.send(user);
+            } else {
+                res.send({error: 'No user with this username'});
             }
         }
-        res.json(adminEvents);
-    }
-}))
+    }))
 
-app.get("/queryUserByUsername", asyncMiddleware(async(req, res, next) => {
-    var username = req.query.username;
-    if (typeof username === 'undefined') {
-        res.send({error: 'Invalid parameter'});
-    } else {
-        var user = await db.collection("users").findOne({username: username});
-        if (!!user) {
-            res.send(user);
+    app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
+        var email = req.query.email;
+        if (typeof email === 'undefined') {
+            res.send({error: 'Invalid parameter'});
         } else {
+            var user = await database.getUserByEmail(email)
+            if (!!user) {
+                res.send(user);
+            } else {
+                res.send({error: 'No user with this email'});
+            }
+        }
+    }))
+
+    app.get("/events/tags/:tag", asyncMiddleware(async(req, res, next) => {
+        var tag = req.params.tag;
+        res.json(await database.getEventsByTag(tag))
+    }))
+
+    /*app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
+        var userId = req.query.userId;
+        var eventId = req.query.eventId;
+        var status = req.query.status;
+        if (typeof userId === 'undefined' || typeof eventId === 'undefined' ||
+            typeof status === 'undefined') {
+            res.send({error: 'Invalid parameter'});
+            return;
+        }
+        var user = await database.getUser(userId)
+        var event = await database.getEvent(eventId)
+        if (!user) {
             res.send({error: 'No user with this username'});
+            return;
         }
-    }
-}))
-
-app.get("/queryUserByEmail", asyncMiddleware(async(req, res, next) => {
-    var email = req.query.email;
-    if (typeof email === 'undefined') {
-        res.send({error: 'Invalid parameter'});
-    } else {
-        var user = await db.collection("users").findOne({email: email});
-        if (!!user) {
-            res.send(user);
-        } else {
-            res.send({error: 'No user with this email'});
+        if (!event) {
+            res.send({error: 'No event with this name'});
+            return;
         }
-    }
-}))
 
-app.get("/events/tags/:tag", asyncMiddleware(async(req, res, next) => {
-    var tag = req.params.tag;
-    res.json(await database.getEventsByTag(tag))
-}))
-
-/*app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
-    var userId = req.query.userId;
-    var eventId = req.query.eventId;
-    var status = req.query.status;
-    if (typeof userId === 'undefined' || typeof eventId === 'undefined' ||
-        typeof status === 'undefined') {
-        res.send({error: 'Invalid parameter'});
-        return;
-    }
-    var user = await database.getUser(userId)
-    var event = await database.getEvent(eventId)
-    if (!user) {
-        res.send({error: 'No user with this username'});
-        return;
-    }
-    if (!event) {
-        res.send({error: 'No event with this name'});
-        return;
-    }
-
-    var userEvents = await database.getUserEvents();
-    var friendsAttending = []
-    for (var i = 0; i < userEvents.length; i++) {
-        if (userEvents[i].eventID === event._id &&
-            user.friends.includes(userEvents[i].userId) &&
-            userEvents[i].status === status) {
-            friendsAttending.push(userEvents[i].userId);
+        var userEvents = await database.getUserEvents();
+        var friendsAttending = []
+        for (var i = 0; i < userEvents.length; i++) {
+            if (userEvents[i].eventID === event._id &&
+                user.friends.includes(userEvents[i].userId) &&
+                userEvents[i].status === status) {
+                friendsAttending.push(userEvents[i].userId);
+            }
         }
-    }
-    res.send(requestedEvents);
-}))*/
+        res.send(requestedEvents);
+    }))*/
 
-app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
-    var {userId, eventId, status} = req.query;
-    res.json(await database.getFriendsAttendingEvent(userId, eventId, status))
-}))
+    app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
+        var {userId, eventId, status} = req.query;
+        res.json(await database.getFriendsAttendingEvent(userId, eventId, status))
+    }))
 
-app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
-    var username = req.query.username;
-    var status = req.query.status;
-    if (typeof username === 'undefined' || typeof status === 'undefined') {
-        res.send({error: 'Invalid parameter'});
-        return;
-    }
-    var user = await db.collection("users").findOne({username: username});
-    if (!user) {
-        res.send({error: 'No user with this username'});
-        return;
-    }
-    var userEvents = await database.getUserEvents();
-    var interestedEvents = []
-    for (var i = 0; i < userEvents.length; i++) {
-        if (userEvents[i].userID === user._id && userEvents[i].status === status) {
-            interestedEvents.push(userEvents[i].eventID);
+    app.get("/queryEventUserInterested", asyncMiddleware(async(req, res, next) => {
+        var username = req.query.username;
+        var status = req.query.status;
+        if (typeof username === 'undefined' || typeof status === 'undefined') {
+            res.send({error: 'Invalid parameter'});
+            return;
         }
-    }
-    res.send(interestedEvents);
+        var user = await database.getUserByUsername(username)
+        if (!user) {
+            res.send({error: 'No user with this username'});
+            return;
+        }
+        var userEvents = await database.getUserEvents();
+        var interestedEvents = []
+        for (var i = 0; i < userEvents.length; i++) {
+            if (userEvents[i].userID === user._id && userEvents[i].status === status) {
+                interestedEvents.push(userEvents[i].eventID);
+            }
+        }
+        res.send(interestedEvents);
 
-}))
+    }))
 
-app.get("/search", asyncMiddleware(async(req, res, next) => {
-    var {query} = req.query;
-    var userResults = await database.searchUsers(query);
-    var eventResults = await database.searchEvents(query)
-    res.json({users:userResults, events: eventResults})
-}))
+    app.get("/search", asyncMiddleware(async(req, res, next) => {
+        var {query} = req.query;
+        var userResults = await database.searchUsers(query);
+        var eventResults = await database.searchEvents(query)
+        res.json({users:userResults, events: eventResults})
+    }))
 
-app.listen(process.env.PORT || 5000);
+    app.listen(process.env.PORT || 5000);
+
+})()

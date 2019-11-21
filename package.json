@@ -4,14 +4,17 @@
   "description": "hot backend",
   "dependencies": {
     "body-parser": "^1.19.0",
+    "chai": "^4.2.0",
     "express": "^4.15.2",
     "firebase-admin": "^8.7.0",
+    "mocha": "^6.2.2",
     "mongodb": "^3.3.4",
     "package.json": "^2.0.1",
     "request": "^2.88.0",
     "swagger-jsdoc": "^3.4.0"
   },
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "mocha"
   }
 }
