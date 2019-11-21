@@ -1,13 +1,47 @@
 const
     MongoClient = require("mongodb").MongoClient,
-    ObjectId = require('mongodb').ObjectId;
+    ObjectId = require('mongodb').ObjectId,
+	TEST_DATABASE_URL = "mongodb://heroku_9h24ss95:uk5629915p1ji1c9nbr9idd8fp@ds123490.mlab.com:23490/heroku_9h24ss95",
+	TEST_DATABASE = "heroku_9h24ss95",
+	PRODUCTION_DATABASE_URL = "mongodb://heroku_4bgzbp8r:srsgfdtlepejihdfa2ruarggr5@ds053937.mlab.com:53937/heroku_4bgzbp8r",
+	PRODUCTION_DATABASE = "heroku_4bgzbp8r";
 
 
-
-module.exports = async function(){
-	var client = await MongoClient.connect("mongodb://heroku_4bgzbp8r:srsgfdtlepejihdfa2ruarggr5@ds053937.mlab.com:53937/heroku_4bgzbp8r")
-    var db = client.db("heroku_4bgzbp8r");
+module.exports = async function(production){
+	if (production){
+		var client = await MongoClient.connect(PRODUCTION_DATABASE_URL)
+    	var db = client.db(PRODUCTION_DATABASE);
+	}
+	else{
+		var client = await MongoClient.connect(TEST_DATABASE_URL);
+		var db = client.db(TEST_DATABASE)
+	}
+	
 	var exports = {};
+
+	function getEntities(collection){
+		return async function(){
+			return await db.collection(collection).find({}).toArray();
+		}
+	}
+
+	function getEntity(collection){
+		return async function(query){
+			return await db.collection(collection).findOne(query)
+		}
+	}
+
+	function deleteEntity(collection){
+		return async function (query){
+			return await db.collection(collection).deleteOne(query)
+		}
+	}
+
+	function createEntity(collection){
+		return async function(data){
+			return await db.collection(collection).insertOne(data)
+		}
+	}
 	exports.getEvents = getEntities("events");
 	exports.getEvent = getEntity("events");
 	exports.createEvent = createEntity("events");
@@ -20,31 +54,10 @@ module.exports = async function(){
 	exports.createTestEvent = createEntity("testEvents")
 	exports.getTestEvents = getEntities("testEvents")
 
-	function getEntities(collection){
-		return async function(){
-			return await db.collection(collection).find({}).toArray();
-		}
-	}
-
-	function getEntity(collection){
-		return async function(entityId){
-			var query = {_id: ObjectId(entityId)}
-			return await db.collection(collection).findOne(query)
-		}
-	}
-
-	function deleteEntity(collection){
-		return async function (entityId){
-			var query = {_id: ObjectId(entityId)}
-			return await db.collection(collection).deleteOne(query)
-		}
-	}
-
-	function createEntity(collection){
-		return async function(data){
-			return await db.collection(collection).insertOne(data)
-		}
-	}
+	exports.getEntities = getEntities;
+	exports.getEntity = getEntity;
+	exports.deleteEntity = deleteEntity;
+	exports.createEntity = createEntity;
 
 
 	exports.getEventsByUserAndStatus = async function(userId, status){
@@ -113,8 +126,12 @@ module.exports = async function(){
 		return await db.collection("users").findOne({email: email})
 	}
 
+	exports.removeAll = async function(collection){
+		return await db.collection(collection).remove({})
+	}
+
 	return exports
-}()
+}
 
 
 

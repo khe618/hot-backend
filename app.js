@@ -7,7 +7,7 @@
           ObjectId = require('mongodb').ObjectId;
           request = require("request"),
           swaggerJSDoc = require('swagger-jsdoc'),
-          database = await require("./database"),
+          database = await require("./database")(true),
           admin = require('firebase-admin');
     var app = express();
 
@@ -139,10 +139,12 @@
      *
      */
     app.get("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-        res.json(await database.getEvent(req.params.eventId));
+        var query = {_id: ObjectId(req.params.eventId)}
+        res.json(await database.getEvent(queryUserByEmail));
     }))
 
     app.delete("/events/:eventId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
+        var query = {_id: ObjectId(req.params.eventId)}
         res.json(await database.deleteEvent(req.params.eventId))
     }))
 
@@ -168,11 +170,13 @@
 
 
     app.get("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-        res.json(await database.getUser(req.params.userId))
+        var query = {_id: ObjectId(req.params.userId)};
+        res.json(await database.getUser(query));
     }))
 
     app.delete("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
-        res.json(await database.deleteUser(req.params.userId))
+        var query = {_id: ObjectId(req.params.userId)};
+        res.json(await database.deleteUser(query))
     }))
 
     app.post("/users", asyncMiddleware(async (req, res, next) => {
