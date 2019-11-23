@@ -48,7 +48,7 @@ module.exports = async function(production){
 	exports.deleteEvent= deleteEntity("events");
 	exports.getUsers = getEntities("users");
 	exports.getUser = getEntity("users");
-	exports.createUser = createEntity("users");
+	//exports.createUser = createEntity("users");
 	exports.deleteUser = deleteEntity("users");
 	exports.getUserEvents = getEntities("userEvents");
 	exports.getUserEvent = getEntity("userEvents");
@@ -83,6 +83,10 @@ module.exports = async function(production){
 		return await db.collection("userEvents").update(query, obj, {upsert:true})
 	}
 
+	exports.createUser = async function(data){
+		var query = {username: data.username}
+		return await db.collection("users").update(query, data, {upsert:true})
+	}
 	exports.getFriendsEvents = async function(userId){
 		var user = await exports.getUser(userId);
 		var userEvents = await db.collection("userEvents").find({userId: {$in: user.friends}}).toArray()
