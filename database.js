@@ -85,7 +85,7 @@ module.exports = async function(production){
 
 	exports.createUser = async function(data){
 		var query = {username: data.username}
-		return await db.collection("users").update(query, data, {upsert:true})
+		return await db.collection("users").findOneAndUpdate(query, {$set: data}, {upsert: true, returnOriginal: false})
 	}
 	exports.getFriendsEvents = async function(userId){
 		var user = await exports.getUser(userId);

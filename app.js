@@ -370,7 +370,8 @@
      */
     app.post("/users", asyncMiddleware(async (req, res, next) => {
         var result = await database.createUser(req.body);
-        res.send(result.insertedId);
+        console.log(result)
+        res.send(result.value);
     }))
 
     /**
