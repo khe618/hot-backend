@@ -226,9 +226,14 @@
      *         description: Create and returns an event object
      *
      */
-    app.post("/events", asyncMiddleware(async (req, res, next) => {
+    app.post("/events", asyncMiddleware(async (req, res, next) =>{
         var result = await database.createEvent(req.body);
         res.send(result.insertedId);
+    }))
+
+    app.put("/events", asyncMiddleware(async (req, res, next) => {
+        var result = await database.updateEvent(req.body)
+        res.json(result)
     }))
 
     /**
@@ -261,6 +266,7 @@
     app.get("/events/test", asyncMiddleware(async (req, res, next) => {
         res.json(await database.getTestEvents());
     }))
+
 
     /**
      * @swagger

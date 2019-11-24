@@ -62,6 +62,12 @@ module.exports = async function(production){
 	exports.deleteEntity = deleteEntity;
 	exports.createEntity = createEntity;
 
+	exports.updateEvent = async function(data){
+		var query = {_id: ObjectId(data._id)}
+		delete data._id
+		return await db.collection("events").update(query, data)
+	}
+
 	exports.getEventsByUserAndStatus = async function(userId, status){
 		var query = {userId: userId, status: status};
 	    var userEvents = await db.collection("userEvents").find(query).toArray()
