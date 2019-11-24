@@ -245,7 +245,12 @@
      *
      */
     app.get("/events", asyncMiddleware(async (req, res, next) => {
-        res.json(await database.getEvents());
+        var events = await database.getEvents()
+        if ("latitude" in req.query && "longitude" in req.query && "limit" in req.query){
+            var {latitude, longitude, limit} = req.query;
+            events = events.filter(event => getDistanceFromLatLonInKm(event.loc.lat, event.loc.lng, latitude, longitude) < limit)
+        }
+        res.json(events)
     }))
 
     app.post("/events/test", asyncMiddleware(async (req, res, next) => {
