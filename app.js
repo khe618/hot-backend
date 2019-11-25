@@ -253,7 +253,7 @@
         var events = await database.getEvents()
         if ("latitude" in req.query && "longitude" in req.query && "limit" in req.query){
             var {latitude, longitude, limit} = req.query;
-            events = events.filter(event => getDistanceFromLatLonInKm(event.loc.lat, event.loc.lng, latitude, longitude) < limit)
+            events = events.filter(event => event.loc && getDistanceFromLatLonInKm(event.loc.lat, event.loc.lng, latitude, longitude) < limit)
         }
         res.json(events)
     }))
