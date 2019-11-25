@@ -258,6 +258,10 @@
         res.json(events)
     }))
 
+    app.get("/events/now", asyncMiddleware(async (req, res, next) => {
+        res.json(await database.getCurrentEvents())
+    }))
+
     app.post("/events/test", asyncMiddleware(async (req, res, next) => {
         var result = await database.createTestEvent(req.body);
         res.send(result.insertedId);

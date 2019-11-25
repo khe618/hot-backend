@@ -125,6 +125,11 @@ module.exports = async function(production){
 		return await db.collection(collection).remove({})
 	}
 
+	exports.getCurrentEvents = async function(){
+		var now = (new Date()).toISOString()
+		return await db.collection("events").find({start_date: {$lt: now}, end_date: {$gte: now}}).toArray()
+	}
+
 	return exports
 }
 
