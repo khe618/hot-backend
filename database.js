@@ -128,6 +128,13 @@ module.exports = async function(production){
 	exports.getCurrentEvents = async function(){
 		var now = (new Date()).toISOString()
 		return await db.collection("events").find({start_date: {$lt: now}, end_date: {$gte: now}}).toArray()
+
+	}
+
+	exports.getUpcomingEvents = async function(hours){
+		var now = (new Date()).toISOString();
+		var upcoming = (new Date(Date.now() + 3600000 * hours)).toISOString()
+		return await db.collection("events").find({start_date: {$lt: upcoming, $gte: now}}).toArray()
 	}
 
 	return exports
