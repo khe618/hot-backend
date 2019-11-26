@@ -16,7 +16,7 @@ module.exports = async function(production){
 		var client = await MongoClient.connect(TEST_DATABASE_URL);
 		var db = client.db(TEST_DATABASE)
 	}
-	
+
 	var exports = {};
 
 	function getEntities(collection){
@@ -94,10 +94,14 @@ module.exports = async function(production){
 		return await db.collection("users").findOneAndUpdate(query, {$set: data}, {upsert: true, returnOriginal: false})
 	}
 	exports.getFriendsEvents = async function(userId){
-		var user = await exports.getUser(userId);
-		var userEvents = await db.collection("userEvents").find({userId: {$in: user.friends}}).toArray()
-		var eventIds = userEvents.map(x => ObjectId(x.eventId))
-		return await db.collection("events").find({_id: {$in: eventIds}}).toArray()
+		var user = await exports.getUser({_id: userId});
+        if (!Array.isArray(user) || !user.length) {
+            return Array();
+        } else {
+    		var userEvents = await db.collection("userEvents").find({userId: {$in: user.friends}}).toArray();
+    		var eventIds = userEvents.map(x => ObjectId(x.eventId));
+    		return await db.collection("events").find({_id: {$in: eventIds}}).toArray();
+        }
 	}
 
 	exports.getEventsByTag = async function(tag){
@@ -106,11 +110,14 @@ module.exports = async function(production){
 	}
 
 	exports.getFriendsAttendingEvent = async function(userId, eventId, status){
-		var user = await exports.getUser(userId)
-		var friendsAttending = await db.collection("userEvents").find({userId: {$in: user.friends}, eventId: eventId, status: status}).toArray();
-		console.log(friendsAttending)
-		var friendsIds = friendsAttending.map(x => ObjectId(x.userId));
-		return await db.collection("users").find({_id: {$in: friendsIds}}).toArray()
+		var user = await exports.getUser({_id: userId});
+        if (!Array.isArray(user) || !user.length) {
+            return Array();
+        } else {
+            var friendsAttending = await db.collection("userEvents").find({userId: {$in: user.friends}, eventId: eventId, status: status}).toArray();
+    		var friendsIds = friendsAttending.map(x => ObjectId(x.userId));
+    		return await db.collection("users").find({_id: {$in: friendsIds}}).toArray();
+        }
 	}
 
 	exports.searchEvents = async function(query){
@@ -139,7 +146,3 @@ module.exports = async function(production){
 
 	return exports
 }
-
-
-
-

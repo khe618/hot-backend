@@ -632,6 +632,7 @@
         typeof longitude === 'undefined') {
             res.status(500).send({ error: 'Invalid parameters' })
         } else {
+            userId = ObjectId(userId);
             var events = await database.getFriendsEvents(userId);
             var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.loc.lat, a.loc.lng) -
                 getDistanceFromLatLonInKm(latitude, longitude, b.loc.lat, b.loc.lng));
@@ -835,6 +836,7 @@
      */
     app.get("/queryFriendsAttendingEvent", asyncMiddleware(async(req, res, next) => {
         var {userId, eventId, status} = req.query;
+        var userId = ObjectId(userId);
         res.json(await database.getFriendsAttendingEvent(userId, eventId, status))
     }))
 
