@@ -48,7 +48,7 @@ module.exports = async function(production){
 	exports.deleteEvent= deleteEntity("events");
 	exports.getUsers = getEntities("users");
 	exports.getUser = getEntity("users");
-	//exports.createUser = createEntity("users");
+	exports.createUser = createEntity("users");
 	exports.deleteUser = deleteEntity("users");
 	exports.getUserEvents = getEntities("userEvents");
 	exports.getUserEvent = getEntity("userEvents");
@@ -66,6 +66,12 @@ module.exports = async function(production){
 		var query = {_id: ObjectId(data._id)}
 		delete data._id
 		return await db.collection("events").update(query, data)
+	}
+
+	exports.updateUser = async function(data){
+		var query = {_id: ObjectId(data._id)}
+		delete data._id
+		return await db.collection("users").update(query, data)
 	}
 
 	exports.getEventsByUserAndStatus = async function(userId, status){
@@ -89,10 +95,11 @@ module.exports = async function(production){
 		return await db.collection("userEvents").update(query, obj, {upsert:true})
 	}
 
-	exports.createUser = async function(data){
+	/*exports.createUser = async function(data){
 		var query = {username: data.username}
 		return await db.collection("users").findOneAndUpdate(query, {$set: data}, {upsert: true, returnOriginal: false})
-	}
+	}*/
+
 	exports.getFriendsEvents = async function(userId){
 		var user = await exports.getUser({_id: userId});
         if (!Array.isArray(user) || !user.length) {
