@@ -44,7 +44,7 @@ module.exports = async function(production){
 	}
 	exports.getEvents = getEntities("events");
 	exports.getEvent = getEntity("events");
-	exports.createEvent = createEntity("events");
+	// exports.createEvent = createEntity("events");
 	exports.deleteEvent= deleteEntity("events");
 	exports.getUsers = getEntities("users");
 	exports.getUser = getEntity("users");
@@ -73,6 +73,24 @@ module.exports = async function(production){
 		delete data._id
 		return await db.collection("users").update(query, data)
 	}
+
+    exports.createEvent = async function(data) {
+        if ("name" in data && typeof(data.name) == "string" &&
+            "desc" in data && typeof(data.desc) == "string" &&
+            "start_date" in data && typeof(date.start_date.getMonth) == 'function' &&
+            "end_date" in data && typeof(date.end_date.getMonth) == 'function' &&
+            "addr" in data && typeof(date.addr) == "string" &&
+            "loc" in data && Array.isArray(data.loc) &&
+            "isBoosted" in data && typeof(data.isBoosted) &&
+            "tags" in data && Array.isArray(data.tags) &&
+            "admins" in data && Array.isArray(data.admins) &&
+            "hot_level" in data && data.hot_level === parseInt(data.hot_level, 10)) {
+            return await db.collection("events").insertOne(data);
+        } else {
+            console.log("NOT valid event");
+            return NULL;
+        }
+    }
 
 	exports.getEventsByUserAndStatus = async function(userId, status){
 		var query = {userId: userId, status: status};
