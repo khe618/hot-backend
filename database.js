@@ -77,11 +77,11 @@ module.exports = async function(production){
     exports.createEvent = async function(data) {
         if ("name" in data && typeof(data.name) == "string" &&
             "desc" in data && typeof(data.desc) == "string" &&
-            "start_date" in data && typeof(date.start_date.getMonth) == 'function' &&
-            "end_date" in data && typeof(date.end_date.getMonth) == 'function' &&
+            "start_date" in data && typeof(data.start_date) == "string" &&
+            "end_date" in data && typeof(data.end_date) == "string" &&
             "addr" in data && typeof(date.addr) == "string" &&
             "loc" in data && Array.isArray(data.loc) &&
-            "isBoosted" in data && typeof(data.isBoosted) &&
+            "isBoosted" in data && typeof(data.isBoosted) == "boolean" &&
             "tags" in data && Array.isArray(data.tags) &&
             "admins" in data && Array.isArray(data.admins) &&
             "hot_level" in data && data.hot_level === parseInt(data.hot_level, 10)) {
