@@ -639,14 +639,16 @@
         var {userId, latitude, longitude} = req.query;
         if (typeof userId === 'undefined' || typeof latitude === 'undefined' ||
         typeof longitude === 'undefined') {
-            res.status(500).send({ error: 'Invalid parameters' })
-        } else {
-            userId = ObjectId(userId);
-            var events = await database.getFriendsEvents(userId);
-            var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.loc.lat, a.loc.lng) -
-                getDistanceFromLatLonInKm(latitude, longitude, b.loc.lat, b.loc.lng));
-            res.json(result)
+            throw Error("Invalid parameters")
         }
+
+        userId = ObjectId(userId);
+        //var events = await database.getFriendsEvents(userId);
+        var events = await database.getUpcomingEvents(24)
+        var result = events.sort((a, b) => getDistanceFromLatLonInKm(latitude, longitude, a.loc.lat, a.loc.lng) -
+            getDistanceFromLatLonInKm(latitude, longitude, b.loc.lat, b.loc.lng));
+        res.json(result)
+
     }))
 
     /**
