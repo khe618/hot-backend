@@ -389,12 +389,23 @@
      *
      */
     app.post("/users", asyncMiddleware(async (req, res, next) => {
+        var admins = req.body.admins;
+        for (var admin of admins){
+            if (admin.length != 24 || !database.getUser(admin)){
+                throw Error("Admin does not exist")
+            }
+        }
         var result = await database.createUser(req.body);
         res.send(result.insertedId);
     }))
 
     app.put("/users", asyncMiddleware(async(req, res, next) => {
-        console.log(req.body)
+        var admins = req.body.admins;
+        for (var admin of admins){
+            if (admin.length != 24 || !database.getUser(admin)){
+                throw Error("Admin does not exist")
+            }
+        }
         res.json(await database.updateUser(req.body))
     }))
 
