@@ -37,7 +37,13 @@
         var properties = ["refs", "updater", "name", "desc", "start_date",
         "end_date", "addr", "loc", "isBoosted", "tags", "admins", "hot_level"]
         if (!properties.every((x) => x in req.body)){
-            throw Error(`Missing parameters- these parameters should be included: ${properties}`)
+            //throw Error(`Missing parameters- these parameters should be included: ${properties}`)
+            return res.json({"error": `Missing parameters- these parameters should be included: ${properties}`})
+        }
+        var admins = req.body.admins
+        var isValidAdmins = await database.isValidAdmins(admins)
+        if (!isValidAdmins){
+            return res.json({"error": "One or more admins do not exist"})
         }
         next()
     }
@@ -245,7 +251,7 @@
         res.send(result.insertedId);
     }))
 
-    app.put("/events", asyncMiddleware(async (req, res, next) => {
+    app.put("/events", asyncMiddleware(validateEvent), asyncMiddleware(async (req, res, next) => {
         var result = await database.updateEvent(req.body)
         res.json(result)
     }))
