@@ -164,5 +164,10 @@ module.exports = async function(production){
 		return 3
 	}
 
+	exports.isValidAdmins = async function(admins){
+		var validAdmins = await db.collection("users").find({username: {$in: admins}}).toArray()
+		return validAdmins.length == admins.length
+	}
+
 	return exports
 }

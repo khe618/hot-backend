@@ -167,6 +167,10 @@
         res.json(await database.deleteEvent(query))
     }))
 
+    app.delete("/events", asyncMiddleware(async (req, res, next) =>{
+        res.json(await database.deleteEvent(query))
+    }))
+
     /**
      * @swagger
      * /events:
@@ -347,6 +351,10 @@
     app.delete("/users/:userId([0-9a-f]{24})", asyncMiddleware(async (req, res, next) => {
         var query = {_id: ObjectId(req.params.userId)};
         res.json(await database.deleteUser(query))
+    }))
+
+    app.delete("/users", asyncMiddleware(async(req, res, next) =>{
+        res.json(await database.deleteUser(req.body))
     }))
 
     /**
@@ -556,9 +564,9 @@
      *
      */
     app.delete("/userEvents", asyncMiddleware(async (req, res, next) => {
-        var {userId, eventId} = req.query;
-        var query = {userId: userId, eventId: eventId}
-        res.json(await database.deleteUserEvent(query));
+        //var {userId, eventId} = req.query;
+        //var query = {userId: userId, eventId: eventId}
+        res.json(await database.deleteUserEvent(req.body));
     }))
 
     /**
