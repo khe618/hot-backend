@@ -33,6 +33,15 @@
         next()
     }
 
+    async function validateEvent(req, res, next){
+        var properties = ["refs", "updater", "name", "desc", "start_date",
+        "end_date", "addr", "loc", "isBoosted", "tags", "admins", "hot_level"]
+        if (!properties.every((x) => x in req.body)){
+            throw Error(`Missing parameters- these parameters should be included: ${properties}`)
+        }
+        next()
+    }
+
     function deg2rad(deg) {
       return deg * (Math.PI/180)
     }
@@ -230,7 +239,8 @@
      *         description: Create and returns an event object
      *
      */
-    app.post("/events", asyncMiddleware(async (req, res, next) =>{
+
+    app.post("/events", asyncMiddleware(validateEvent), asyncMiddleware(async (req, res, next) =>{
         var result = await database.createEvent(req.body);
         res.send(result.insertedId);
     }))
