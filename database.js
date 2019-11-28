@@ -151,5 +151,18 @@ module.exports = async function(production){
 		return await db.collection("events").find({start_date: {$lt: upcoming, $gte: now}}).toArray()
 	}
 
+	exports.getHotLevel = async function(eventId){
+		var query = {eventId: eventId, status: "checkedIn"}
+		var users = await db.collection("userEvents").find(query).toArray()
+		var numUsers = users.length
+		if (numUsers < 10){
+			return 1
+		}
+		if (numUsers < 50){
+			return 2
+		}
+		return 3
+	}
+
 	return exports
 }

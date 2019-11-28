@@ -512,6 +512,11 @@
     app.post("/userEvents", asyncMiddleware(async (req, res, next) => {
         var {userId, eventId, status} = req.body;
         var result = await database.createUserEvent(userId, eventId, status);
+        if (status === "checkedIn"){
+            var hotLevel = await database.getHotLevel(eventId)
+            var update = {_id: ObjectId(eventId), $set: {hot_level: hotLevel}}
+            await database.updateEvent(update)
+        }
         res.sendStatus(200);
     }))
 
